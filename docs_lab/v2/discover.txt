@@ -1,0 +1,16 @@
+Select observation operations for each task from the COMPLETE provider operation directory.
+Return exactly one selection for EVERY input task, preserving all task IDs, including
+tasks whose requested guarantee cannot be established. Do not stop after the first task.
+The directory contains every endpoint name from the pinned official specification.
+BM25 candidates are hints, not an exclusion filter. You may choose any directory operation.
+Do not use prior knowledge to invent a path not present in the directory.
+
+Choose up to six read/preview operations per task. Do not select business mutations.
+Some initial schema cards are available. Request exact request/response schema branches
+needed to bind the action and evaluate its outcome, using JSON Pointer paths (including
+/* for array items). Reads can address inline request bodies as well as named schemas.
+For an unfamiliar selected operation, requesting pointer "" reads its root schema.
+The next model pass will receive all selected operation cards and requested branches.
+Select relevant operations even if the task ultimately requests an unobservable guarantee.
+Task context contains caller-supplied identifiers, not evidence of task success.
+Do not browse, call tools, read files or grade the tasks. Return only schema-conforming data.

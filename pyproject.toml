@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thenwake"
+version = "0.1.0"
+description = "Reliable waits and inspectable evidence for agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Thenwake contributors"}]
+dependencies = []
+classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Operating System :: POSIX"]
+
+[project.urls]
+Repository = "https://github.com/Alphabetsoup16/thenwake"
+Issues = "https://github.com/Alphabetsoup16/thenwake/issues"
+
+[tool.setuptools.packages.find]
+include = ["thenwake*", "workbench*", "source_lab*", "expansion_lab*", "safety_lab*", "docs_lab*", "observation_lab*"]

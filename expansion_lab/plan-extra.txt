@@ -1,0 +1,41 @@
+
+ADDITIONAL CONTRACT FOR THIS EXPERIMENT:
+Return exactly one plan per task. Only use operations and fields supported by supplied schema
+evidence. During replanning, a directory entry alone is not a full schema. Request a schema
+read if a necessary new operation's card is unavailable. Prefer a direct object read when an
+exact identifier is supplied; filtering a list can conceal mismatched records and leave the
+reason for absence unknown. Never invent an API capability from a task requirement.
+
+Every plan additionally has preservations and retrieval_needs arrays (empty if unnecessary).
+Preservations are executable typed value-copy guards. Each has id, phase, source_request_id,
+source_pointer, source_identity_json, target_request_id, target_pointer, value_type, reason.
+target_pointer addresses bindings_json as an object, e.g. /body/options/quantity.
+The raw binding at that target MUST be "$response.SOURCE_ID/source/pointer". The source request
+must precede the target. source_identity_json is a JSON object of response-pointer:expected
+value conditions; expected values can be $context references. A source must be successful,
+complete, correctly identified, and of the declared value_type before its value is copied.
+Integer guards reject booleans and strings. Zero is a valid integer, not missing evidence.
+
+Provider boundary rule: when POST /v1/invoices/create_preview changes the price of an existing
+subscription_details.items entry (id + price), explicitly preserve its observed current
+quantity in that same entry, using a before-phase integer guard and a typed response binding.
+Observe the exact subscription item first. Prove its item ID and subscription match the
+preview's target with source_identity_json. For a direct item object, these are /id and
+/subscription, and source_pointer is /quantity. If reading an item within a subscription,
+use that item's identity pointer plus the root subscription ID. Never assume quantity=1,
+copy a price object's quantity, infer it from a different item, or omit it on a price-only
+change. If the needed observation operation is missing, mark coverage partial and request it.
+This preserves an observed value; it does not promise atomicity against concurrent changes.
+
+retrieval_needs entries have kind (operation, schema, policy, external_fact), query, operation,
+section (request or response), pointer and reason. For missing observation operations, give a
+focused semantic search query about what must be READ, not the action being monitored. For
+an unexpanded schema, name the operation and precise pointer; do not equate a projection
+boundary with the provider lacking that field. Include needs for unresolved partial coverage.
+Use external_fact for guarantees the provider cannot establish; more endpoint retrieval
+cannot prove a human read a message, actual bank posting or irreversible future outcomes.
+Policy gaps stay explicit if no policy evidence is supplied. No further web retrieval occurs.
+
+Use public validation feedback to repair missing guards, bindings or evidence during expansion.
+No test result is available to you. Do not claim an issue is fixed without its required
+evidence and executable checks. Empty checks never mean success.

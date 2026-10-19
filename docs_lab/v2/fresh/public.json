@@ -1,0 +1,63 @@
+{
+  "tasks": [
+    {
+      "id": "f01",
+      "provider": "stripe",
+      "task": "Monitor refund re_goal. Complete when Stripe records that exact refund as succeeded, in USD, for exactly 2500 cents and associated with charge ch_goal. This is Stripe's recorded refund state, not proof of the customer's bank balance.",
+      "context": {
+        "refund_id": "re_goal",
+        "charge_id": "ch_goal",
+        "amount_cents": 2500
+      }
+    },
+    {
+      "id": "f02",
+      "provider": "github",
+      "task": "Monitor pull request 42 in cli/cli. Complete only if GitHub records it as merged, its base branch is main, its head SHA matches the specified SHA, and the PR number matches. A closed but unmerged PR is insufficient.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli",
+        "pull_number": 42,
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    {
+      "id": "f03",
+      "provider": "github",
+      "task": "Complete when cli/cli has no open milestones according to GitHub's REST API. Inspect every page; an empty or incomplete first page is not by itself proof of absence. HTTP errors or a traversal that hits its page budget must leave the result unknown. Do not close or change any milestone.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli"
+      }
+    },
+    {
+      "id": "f04",
+      "provider": "slack",
+      "task": "Using the standard Web API, monitor whether user U0123456789 is currently listed as a member of private conversation G0123456789. Complete on a matching member ID. Search all cursor pages; if the user is absent after a complete traversal, remain pending. Failed access or an incomplete traversal is unknown. Assume an authorized token with the required conversation access will be provided by the caller.",
+      "context": {
+        "user_id": "U0123456789",
+        "channel_id": "G0123456789"
+      }
+    },
+    {
+      "id": "f05",
+      "provider": "github",
+      "task": "Using artifact metadata only, complete when artifact 77 in cli/cli has id 77, expired is false, its recorded digest equals the specified digest, and its workflow_run id is 123. This request is about recorded metadata, not downloading or independently hashing archive bytes.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli",
+        "artifact_id": 77,
+        "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "run_id": 123
+      }
+    },
+    {
+      "id": "f06",
+      "provider": "stripe",
+      "task": "Using only Stripe's standard refund API, prove that the cardholder's bank has actually posted refund re_goal to the customer's account. Stripe's succeeded refund state or a bank reference alone is insufficient; require independent confirmation of the actual bank account credit. Do not create a refund.",
+      "context": {
+        "refund_id": "re_goal"
+      }
+    }
+  ]
+}

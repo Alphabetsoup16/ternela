@@ -1,0 +1,18 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="322" viewBox="0 0 1080 322" role="img" aria-labelledby="title description">
+<title id="title">From a task to a durable agent wake-up</title>
+<desc id="description">Task, observation plan, evidence and decision form a left-to-right flow. Valid evidence can complete a task. Missing or expired evidence produces unknown. Decisions and receipts are stored before the agent resumes.</desc>
+<rect width="1080" height="322" rx="18" fill="#15283d"/>
+<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+<text x="38" y="47" fill="#ffffff" font-size="23" font-weight="650">The agent can wait. The evidence cannot go stale unnoticed.</text>
+<text x="38" y="77" fill="#becddd" font-size="15">A task becomes an explicit observation contract.</text>
+<g fill="none" stroke="#7593af" stroke-width="2"><path d="M240 158h40m-7-6 7 6-7 6M492 158h40m-7-6 7 6-7 6M744 158h40m-7-6 7 6-7 6"/></g>
+<g><rect x="38" y="112" width="202" height="92" rx="9" fill="#213b56"/><text x="56" y="141" fill="#d7e6f3" font-size="13">TASK</text><text x="56" y="171" fill="#ffffff" font-size="18" font-weight="600">“Wait for payment.”</text></g>
+<g><rect x="280" y="112" width="212" height="92" rx="9" fill="#213b56"/><text x="298" y="141" fill="#d7e6f3" font-size="13">OBSERVATION PLAN</text><text x="298" y="169" fill="#ffffff" font-size="17" font-weight="600">Identity · amount · status</text><text x="298" y="190" fill="#becddd" font-size="13">Grounded in API documentation</text></g>
+<g><rect x="532" y="112" width="212" height="92" rx="9" fill="#213b56"/><text x="550" y="141" fill="#d7e6f3" font-size="13">EVIDENCE</text><text x="550" y="169" fill="#ffffff" font-size="17" font-weight="600">Observe. Check. Expire.</text><text x="550" y="190" fill="#becddd" font-size="13">Recheck on change</text></g>
+<g><rect x="784" y="112" width="258" height="92" rx="9" fill="#dff2e7"/><text x="802" y="141" fill="#275d43" font-size="13">DURABLE WAKE-UP</text><text x="802" y="169" fill="#163d2a" font-size="18" font-weight="650">Decision + receipt</text><text x="802" y="190" fill="#275d43" font-size="13">The agent can inspect and resume</text></g>
+<path d="M638 213v30H56" fill="none" stroke="#8ba4bb" stroke-width="1.5"/>
+<circle cx="638" cy="213" r="3" fill="#8ba4bb"/>
+<text x="57" y="271" fill="#d5e1ed" font-size="15">Missing, inaccessible or expired evidence → unknown</text>
+<text x="57" y="295" fill="#a7bed2" font-size="13">This is an architecture diagram. Demo provider responses are labeled separately in the workbench.</text>
+</g></svg>

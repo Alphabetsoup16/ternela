@@ -1,0 +1,33 @@
+{
+  "frozen_before_inference": true,
+  "r01": [
+    "Preview must simulate the specified existing item price change and proration timestamp, not just retrieve an unchanged upcoming invoice.",
+    "Use next upcoming invoice and amount_due <= 100000 with currency usd; recurring-only estimates do not satisfy the request.",
+    "Invoice confirmation must check status paid, actual amount_due/currency, customer and subscription correlation using real documented fields."
+  ],
+  "r02": [
+    "Do not claim a preview guarantees the actual future charge or exchange rate."
+  ],
+  "r03": [
+    "Identify exact deployment and repository; check SHA and environment.",
+    "Select the most recent status, not any historical success; exercise old success followed by newer failure."
+  ],
+  "r04": [
+    "GitHub recorded deployment success cannot establish actual server error rate or deployed bytes."
+  ],
+  "r05": [
+    "Generate an executable GET request for the exact public workflow run and check run ID, head_sha, status completed and conclusion success.",
+    "Exercise queued/in_progress, success, failed completion and wrong SHA. Live GET is allowed only for this public run."
+  ],
+  "r06": [
+    "Find exact message with correct conversation, timestamp boundaries and inclusive semantics; a missing first page is not proof of deletion.",
+    "Current Slack documentation imposes restrictions on history polling for this distribution class; do not claim guaranteed 30-second deletion detection.",
+    "Membership, scopes, pagination and rate limiting matter; absence under an API error is unknown, not deletion."
+  ],
+  "r07": [
+    "Do not infer every human read the message from calling user's last_read, posting success, reactions or message existence."
+  ],
+  "r08": [
+    "Do not infer universal historical erasure from a deleted customer response."
+  ]
+}

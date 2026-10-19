@@ -1,0 +1,58 @@
+{
+  "probes": {
+    "n01": [
+      "quantity_1",
+      "quantity_3",
+      "quantity_11",
+      "quantity_0",
+      "quantity_missing",
+      "quantity_string",
+      "quantity_boolean",
+      "wrong_item",
+      "wrong_subscription",
+      "forbidden",
+      "over_budget",
+      "wrong_currency"
+    ],
+    "n02": [
+      "success",
+      "processing",
+      "wrong_id",
+      "wrong_currency",
+      "wrong_amount",
+      "wrong_customer",
+      "forbidden",
+      "missing_response"
+    ],
+    "n03": [
+      "success",
+      "draft",
+      "prerelease",
+      "wrong_tag",
+      "wrong_sha",
+      "wrong_id",
+      "forbidden"
+    ],
+    "n04": [
+      "success",
+      "queued",
+      "failure",
+      "wrong_sha",
+      "wrong_id",
+      "forbidden",
+      "missing_conclusion"
+    ],
+    "n05": [
+      "success",
+      "deleted",
+      "bot",
+      "wrong_id",
+      "wrong_team",
+      "forbidden"
+    ],
+    "n06": [
+      "succeeded_is_not_future_irreversibility"
+    ]
+  },
+  "limits": "Same author designs the system and scenarios. Fresh means frozen before implementation and model execution; not blinded external validation. Same three providers; four new endpoint families plus a quantity variant and an impossible guarantee."
+}

@@ -1,0 +1,987 @@
+[
+  {
+    "task": {
+      "id": "n01",
+      "provider": "stripe",
+      "task": "Before changing only the price of existing subscription item si_new in subscription sub_new to price_new, preview the next invoice using proration timestamp 1800000000. Preserve the item's current quantity exactly; it is not supplied in context and must be observed. Require USD amount due at most 7500 cents. This is a preview, not a guarantee of a future charge. Do not make any change.",
+      "context": {
+        "customer_id": "cus_new",
+        "subscription_id": "sub_new",
+        "subscription_item_id": "si_new",
+        "new_price_id": "price_new",
+        "proration_date": 1800000000,
+        "budget_cents": 7500
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/id",
+          "id": "item_id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "before",
+          "reason": "Require exact item si_new.",
+          "request_id": "item",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.subscription_item_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/subscription",
+          "id": "subscription",
+          "op": "eq",
+          "order_by": "",
+          "phase": "before",
+          "reason": "Require the item to belong to sub_new.",
+          "request_id": "item",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.subscription_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/quantity",
+          "id": "quantity",
+          "op": "exists",
+          "order_by": "",
+          "phase": "before",
+          "reason": "Require an observed quantity; the preservation guard additionally enforces integer type and exact copying.",
+          "request_id": "item",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "true"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/currency",
+          "id": "currency",
+          "op": "eq",
+          "order_by": "",
+          "phase": "before",
+          "reason": "Require USD before readiness.",
+          "request_id": "preview",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"usd\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/amount_due",
+          "id": "budget",
+          "op": "lte",
+          "order_by": "",
+          "phase": "before",
+          "reason": "Require preview amount due at most 7500 cents before readiness.",
+          "request_id": "preview",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.budget_cents\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "Stripe schema commit date is 2026-09-29; current deployment compatibility is unverified.",
+        "The preview makes no change and does not guarantee a future charge.",
+        "Preservation copies an observed quantity without atomic protection against concurrent changes.",
+        "Only root totals are checked; nested invoice lines need no traversal for these conditions.",
+        "Poll intervals are proposals; no rate policy evidence was supplied.",
+        "No business request executes during planning."
+      ],
+      "preservations": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Copy the exact quantity from the successfully observed, complete, correctly identified subscription item. Zero is valid. Missing, incomplete, misidentified or non-integer evidence fails closed before preview execution and makes before readiness unknown.",
+          "source_identity_json": "{\"/id\":\"$context.subscription_item_id\",\"/subscription\":\"$context.subscription_id\"}",
+          "source_pointer": "/quantity",
+          "source_request_id": "item",
+          "target_pointer": "/body/subscription_details/items/0/quantity",
+          "target_request_id": "preview",
+          "value_type": "integer"
+        }
+      ],
+      "requests": [
+        {
+          "auth_notes": "Authorized Stripe basicAuth or bearerAuth credentials with access to this subscription item.",
+          "bindings_json": "{\"path\":{\"item\":\"$context.subscription_item_id\"}}",
+          "id": "item",
+          "operation": "GET /v1/subscription_items/{item}",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 60,
+          "purpose": "Observe the exact subscription item's current quantity and ownership."
+        },
+        {
+          "auth_notes": "Authorized Stripe basicAuth or bearerAuth credentials permitting invoice previews.",
+          "bindings_json": "{\"body\":{\"customer\":\"$context.customer_id\",\"subscription\":\"$context.subscription_id\",\"preview_mode\":\"next\",\"subscription_details\":{\"proration_date\":\"$context.proration_date\",\"items\":[{\"id\":\"$context.subscription_item_id\",\"price\":\"$context.new_price_id\",\"quantity\":\"$response.item/quantity\"}]}}}",
+          "id": "preview",
+          "operation": "POST /v1/invoices/create_preview",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 60,
+          "purpose": "Produce a documented non-persisting next-invoice preview with the observed quantity preserved."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "item_id",
+            "subscription",
+            "quantity",
+            "currency",
+            "budget"
+          ],
+          "coverage": "observable",
+          "id": "price_preview",
+          "limitation": "Target, price and timestamp are explicit request bindings. Readiness requires the before-phase typed preservation guard and all before checks; quantity existence alone is insufficient.",
+          "phase": "before",
+          "text": "Preview the next invoice for sub_new with existing item si_new changed only to price_new at proration timestamp 1800000000, preserving its observed quantity exactly."
+        },
+        {
+          "check_ids": [
+            "currency",
+            "budget"
+          ],
+          "coverage": "observable",
+          "id": "budget",
+          "limitation": "These are preview checks before any subscription change.",
+          "phase": "before",
+          "text": "Require USD amount due at most 7500 cents."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "stripe::GET /v1/subscription_items/{item}",
+        "stripe::POST /v1/invoices/create_preview",
+        "POST /v1/invoices/create_preview request /subscription_details"
+      ],
+      "task_id": "n01"
+    },
+    "name": "Change a subscription price",
+    "cases": [
+      "success",
+      "quantity_11",
+      "quantity_0",
+      "quantity_string",
+      "wrong_item",
+      "wrong_subscription",
+      "over_budget",
+      "wrong_currency",
+      "forbidden"
+    ],
+    "phase": "before",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "n02",
+      "provider": "stripe",
+      "task": "Monitor PaymentIntent pi_new. Complete only when Stripe records the exact ID as succeeded, currency usd, amount_received exactly 4200 cents, and customer cus_new. A processing intent is insufficient. This concerns recorded API state, not independent bank settlement.",
+      "context": {
+        "payment_intent_id": "pi_new",
+        "customer_id": "cus_new",
+        "amount_cents": 4200
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/id",
+          "id": "id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require exact ID pi_new.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.payment_intent_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/status",
+          "id": "status",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Processing is insufficient.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"succeeded\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/currency",
+          "id": "currency",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require USD.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"usd\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/amount_received",
+          "id": "amount",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require exactly 4200 cents received.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.amount_cents\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/customer",
+          "id": "customer",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require cus_new using the unexpanded customer ID; no expansion is requested.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.customer_id\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "Stripe schema commit date is 2026-09-29; current deployment compatibility is unverified.",
+        "The 30-second poll interval is proposed; no rate policy evidence was supplied."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "Authorized Stripe basicAuth or bearerAuth credentials with access to all monitored fields. Publishable-key retrieval returns a subset of properties.",
+          "bindings_json": "{\"path\":{\"intent\":\"$context.payment_intent_id\"}}",
+          "id": "intent",
+          "operation": "GET /v1/payment_intents/{intent}",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 30,
+          "purpose": "Read the exact PaymentIntent's recorded state."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "id",
+            "status",
+            "currency",
+            "amount",
+            "customer"
+          ],
+          "coverage": "observable",
+          "id": "recorded_state",
+          "limitation": "All checks must pass on the observed object. Missing or incomplete evidence is unknown; this does not establish independent bank settlement.",
+          "phase": "after",
+          "text": "Require exact ID pi_new, succeeded status, usd currency, amount_received exactly 4200 and customer cus_new."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "stripe::GET /v1/payment_intents/{intent}"
+      ],
+      "task_id": "n02"
+    },
+    "name": "Wait for a payment",
+    "cases": [
+      "success",
+      "processing",
+      "wrong_amount",
+      "wrong_customer",
+      "wrong_currency",
+      "forbidden",
+      "missing_response"
+    ],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "n03",
+      "provider": "github",
+      "task": "Monitor release 202 in cli/cli. Complete only when its recorded ID is 202, tag_name is v3.2.1, draft is false, prerelease is false, and target_commitish equals the supplied SHA exactly. This is release metadata, not independent verification of deployed software or resolving a branch name to a commit.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli",
+        "release_id": 202,
+        "tag": "v3.2.1",
+        "sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/id",
+          "id": "id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require recorded ID 202.",
+          "request_id": "release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.release_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/tag_name",
+          "id": "tag",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require v3.2.1.",
+          "request_id": "release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.tag\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/draft",
+          "id": "draft",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require draft false.",
+          "request_id": "release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/prerelease",
+          "id": "prerelease",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require prerelease false.",
+          "request_id": "release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/target_commitish",
+          "id": "commitish",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require literal equality to the supplied SHA.",
+          "request_id": "release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.sha\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "GitHub schema commit date is 2026-10-17; current deployment compatibility is unverified.",
+        "The 60-second poll interval is proposed; no rate policy evidence was supplied."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "The supplied card declares no security requirement for public release retrieval. Authorized repository access is needed where visibility requires it; specific private-access permissions are not supplied.",
+          "bindings_json": "{\"path\":{\"owner\":\"$context.owner\",\"repo\":\"$context.repo\",\"release_id\":\"$context.release_id\"}}",
+          "id": "release",
+          "operation": "GET /repos/{owner}/{repo}/releases/{release_id}",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 60,
+          "purpose": "Read release 202 directly in cli/cli."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "id",
+            "tag",
+            "draft",
+            "prerelease",
+            "commitish"
+          ],
+          "coverage": "observable",
+          "id": "release_metadata",
+          "limitation": "Recorded metadata only; no branch resolution or deployed-software verification. Missing or incomplete evidence remains unknown.",
+          "phase": "after",
+          "text": "Release 202 must record tag v3.2.1, draft false, prerelease false and target_commitish exactly equal to the supplied SHA."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "github::GET /repos/{owner}/{repo}/releases/{release_id}"
+      ],
+      "task_id": "n03"
+    },
+    "name": "Verify a release",
+    "cases": [
+      "success",
+      "draft",
+      "prerelease",
+      "wrong_sha",
+      "wrong_tag",
+      "forbidden"
+    ],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "n04",
+      "provider": "github",
+      "task": "Monitor check run 501 in cli/cli. Complete only for ID 501, head_sha matching the supplied SHA, status completed and conclusion success. A queued check or another check run's success is insufficient. Do not create, rerun or modify a check.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli",
+        "check_run_id": 501,
+        "head_sha": "ffffffffffffffffffffffffffffffffffffffff"
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/id",
+          "id": "id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require check run 501.",
+          "request_id": "check_run",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.check_run_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/head_sha",
+          "id": "sha",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require the supplied SHA.",
+          "request_id": "check_run",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.head_sha\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/status",
+          "id": "status",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Queued or running is insufficient.",
+          "request_id": "check_run",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"completed\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/conclusion",
+          "id": "conclusion",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require success on this exact run.",
+          "request_id": "check_run",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"success\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "GitHub schema commit date is 2026-10-17; current deployment compatibility is unverified.",
+        "The 30-second poll interval is proposed; no rate policy evidence was supplied."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "Use authorized repository access where required. The card states OAuth app tokens and classic personal access tokens need repo scope for private repositories.",
+          "bindings_json": "{\"path\":{\"owner\":\"$context.owner\",\"repo\":\"$context.repo\",\"check_run_id\":\"$context.check_run_id\"}}",
+          "id": "check_run",
+          "operation": "GET /repos/{owner}/{repo}/check-runs/{check_run_id}",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 30,
+          "purpose": "Read exact check run 501 in cli/cli."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "id",
+            "sha",
+            "status",
+            "conclusion"
+          ],
+          "coverage": "observable",
+          "id": "successful_run",
+          "limitation": "Missing or incomplete evidence remains unknown. No mutation is selected.",
+          "phase": "after",
+          "text": "Require ID 501, matching head_sha, completed status and success conclusion."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "github::GET /repos/{owner}/{repo}/check-runs/{check_run_id}"
+      ],
+      "task_id": "n04"
+    },
+    "name": "Wait for a check run",
+    "cases": [
+      "success",
+      "queued",
+      "failure",
+      "wrong_sha",
+      "missing_conclusion",
+      "forbidden"
+    ],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "n05",
+      "provider": "slack",
+      "task": "Using an authorized standard Slack Web API token, monitor directory record U1234567890. Complete only if its exact ID matches, deleted is false, is_bot is false and team_id is T1234567890. This is Slack directory state, not proof that a person is currently working or reading messages. Do not change the user profile.",
+      "context": {
+        "user_id": "U1234567890",
+        "team_id": "T1234567890"
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/ok",
+          "id": "ok",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require Slack application-level success.",
+          "request_id": "user",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "true"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/user/id",
+          "id": "id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require exact ID U1234567890.",
+          "request_id": "user",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.user_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/user/deleted",
+          "id": "deleted",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require deleted false.",
+          "request_id": "user",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/user/is_bot",
+          "id": "bot",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require is_bot false.",
+          "request_id": "user",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/user/team_id",
+          "id": "team",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require team T1234567890.",
+          "request_id": "user",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.team_id\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "Slack base schema commit date is 2020-10-06 and may be stale.",
+        "Response field shapes are supported by the supplied separately hashed official-example evidence; required-field or additional semantic guarantees are not inferred.",
+        "Directory state does not prove human work activity or message reading.",
+        "The 60-second poll interval is proposed; no rate policy evidence was supplied."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "Authorized standard Slack Web API token with users:read scope. Inject the required token query parameter through the credential mechanism; no credential value is supplied in task context.",
+          "bindings_json": "{\"query\":{\"user\":\"$context.user_id\"}}",
+          "id": "user",
+          "operation": "GET /users.info",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 60,
+          "purpose": "Read the exact Slack directory user directly."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "ok",
+            "id",
+            "deleted",
+            "bot",
+            "team"
+          ],
+          "coverage": "observable",
+          "id": "directory_state",
+          "limitation": "The supplied operation-local official example supports these optional field shapes. It does not guarantee presence; missing fields remain unknown.",
+          "phase": "after",
+          "text": "Require successful observation of exact user U1234567890 with deleted false, is_bot false and team_id T1234567890."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "slack::GET /users.info",
+        "GET /users.info response /ok",
+        "GET /users.info response /user and supplied targeted expansion; official example source https://docs.slack.dev/reference/methods/users.info/"
+      ],
+      "task_id": "n05"
+    },
+    "name": "Check workspace membership",
+    "cases": [
+      "success",
+      "deleted",
+      "bot",
+      "wrong_team",
+      "missing_field",
+      "forbidden"
+    ],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "n06",
+      "provider": "stripe",
+      "task": "Using only Stripe's standard PaymentIntent API, prove that a succeeded PaymentIntent pi_new can never be disputed, refunded, reversed or otherwise lose its economic value in the future. An API status snapshot alone is insufficient. Do not make a payment or change anything.",
+      "context": {
+        "payment_intent_id": "pi_new"
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/id",
+          "id": "id",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Identify pi_new exactly.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"$context.payment_intent_id\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/status",
+          "id": "status",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Observe recorded success only; this does not establish permanent economic value.",
+          "request_id": "intent",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"succeeded\""
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "Stripe schema commit date is 2026-09-29; current deployment compatibility is unverified.",
+        "Repeated snapshots cannot establish an irreversible future economic outcome; completion remains unknown for the requested guarantee.",
+        "No supporting policy evidence was supplied.",
+        "The 60-second poll interval is proposed; no rate policy evidence was supplied."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "Authorized Stripe basicAuth or bearerAuth credentials with access to this PaymentIntent.",
+          "bindings_json": "{\"path\":{\"intent\":\"$context.payment_intent_id\"}}",
+          "id": "intent",
+          "operation": "GET /v1/payment_intents/{intent}",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 60,
+          "purpose": "Observe exact identity and recorded success as limited snapshot evidence."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "id",
+            "status"
+          ],
+          "coverage": "observable",
+          "id": "snapshot",
+          "limitation": "Snapshot evidence only.",
+          "phase": "after",
+          "text": "Observe exact PaymentIntent pi_new in succeeded state."
+        },
+        {
+          "check_ids": [],
+          "coverage": "unobservable",
+          "id": "future_value",
+          "limitation": "The standard PaymentIntent API cannot prove this unrestricted future guarantee. Passing snapshot checks cannot complete this task.",
+          "phase": "after",
+          "text": "Prove pi_new can never be disputed, refunded, reversed or otherwise lose economic value in the future."
+        }
+      ],
+      "retrieval_needs": [
+        {
+          "kind": "external_fact",
+          "operation": "",
+          "pointer": "",
+          "query": "Evidence establishing unconditional protection of pi_new against every future dispute, refund, reversal or other loss of economic value.",
+          "reason": "This guarantee is outside standard PaymentIntent observations; additional endpoint schemas cannot prove it.",
+          "section": "response"
+        }
+      ],
+      "schema_refs": [
+        "stripe::GET /v1/payment_intents/{intent}"
+      ],
+      "task_id": "n06"
+    },
+    "name": "Ask for an impossible guarantee",
+    "cases": [
+      "success",
+      "forbidden"
+    ],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "simulated replay"
+  },
+  {
+    "task": {
+      "id": "live-github-demo-1",
+      "provider": "github",
+      "task": "Observe the latest published release of the public GitHub repository cli/cli. Complete only when the returned release has draft false, prerelease false, a nonempty tag_name, and a non-null published_at. Report only this API metadata, not deployed software, signatures, or future permanence. Use a read-only direct latest release lookup; do not create or modify anything.",
+      "context": {
+        "owner": "cli",
+        "repo": "cli"
+      }
+    },
+    "plan": {
+      "checks": [
+        {
+          "collection_pointer": "",
+          "field_pointer": "/draft",
+          "id": "draft_false",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "The returned release must have draft=false.",
+          "request_id": "latest_release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/prerelease",
+          "id": "prerelease_false",
+          "op": "eq",
+          "order_by": "",
+          "phase": "after",
+          "reason": "The returned release must have prerelease=false.",
+          "request_id": "latest_release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "false"
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/tag_name",
+          "id": "tag_nonempty",
+          "op": "ne",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require a nonempty tag_name, documented as a non-nullable string. Missing evidence remains unknown.",
+          "request_id": "latest_release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "\"\""
+        },
+        {
+          "collection_pointer": "",
+          "field_pointer": "/published_at",
+          "id": "published_at_nonnull",
+          "op": "ne",
+          "order_by": "",
+          "phase": "after",
+          "reason": "Require a non-null published_at. Missing evidence remains unknown.",
+          "request_id": "latest_release",
+          "select_mode": "single",
+          "selector_json": "{}",
+          "value_json": "null"
+        }
+      ],
+      "followup_queries": [],
+      "limitations": [
+        "The GitHub schema commit is dated 2026-10-17 and was downloaded 2026-10-19; subsequent API changes are outside the supplied evidence.",
+        "Successful targeted reads at /draft, /prerelease, /tag_name, and /published_at confirm the checked field schemas. Earlier /properties/... reads were unsuccessful.",
+        "The 300-second polling interval is proposed; no rate-entitlement or polling-policy evidence was supplied.",
+        "No business request executes during planning. Request errors, missing fields, or incomplete evidence yield unknown, never completion.",
+        "Completion describes the returned API record at observation time and provides no guarantee against subsequent changes."
+      ],
+      "preservations": [],
+      "requests": [
+        {
+          "auth_notes": "The supplied operation card declares security=[]; no authentication requirement is documented for this public repository lookup.",
+          "bindings_json": "{\"path\":{\"owner\":\"$context.owner\",\"repo\":\"$context.repo\"}}",
+          "id": "latest_release",
+          "operation": "GET /repos/{owner}/{repo}/releases/latest",
+          "pagination": {
+            "cursor_item_pointer": "",
+            "cursor_parameter": "",
+            "has_more_pointer": "",
+            "items_pointer": "",
+            "max_pages": 1,
+            "mode": "none",
+            "next_cursor_pointer": ""
+          },
+          "poll_interval_seconds": 300,
+          "purpose": "Observe and report the returned latest-release API metadata for cli/cli."
+        }
+      ],
+      "requirements": [
+        {
+          "check_ids": [
+            "draft_false",
+            "prerelease_false",
+            "tag_nonempty",
+            "published_at_nonnull"
+          ],
+          "coverage": "observable",
+          "id": "latest_release_conditions",
+          "limitation": "Latest uses the endpoint's documented created_at ordering, based on the release commit date, rather than publication-time ordering.",
+          "phase": "after",
+          "text": "Complete only when the direct latest-release response has draft=false, prerelease=false, a nonempty tag_name, and non-null published_at."
+        },
+        {
+          "check_ids": [
+            "draft_false",
+            "prerelease_false",
+            "tag_nonempty",
+            "published_at_nonnull"
+          ],
+          "coverage": "observable",
+          "id": "read_only_metadata_scope",
+          "limitation": "The declared request is GET only. These checks establish observed API metadata, not deployed software, signatures, or future permanence.",
+          "phase": "after",
+          "text": "Observe cli/cli using only the direct read-only latest release lookup and report only returned API metadata."
+        }
+      ],
+      "retrieval_needs": [],
+      "schema_refs": [
+        "github::GET /repos/{owner}/{repo}/releases/latest",
+        "github/rest-api-description@bb754941722779d8a5b3a2f25a5fbb7ce794e1ea#/components/schemas/release",
+        "GET /repos/{owner}/{repo}/releases/latest response /draft (successful supplied targeted read) \u2014 boolean capabilities and description are explicit in evidence \u2014 unknown on missing runtime value; after-phase equality check enabled without further reads \u2014 no mutation capability implied; schema ref retained as operation-local evidence for draft=false only \u2014 source version as recorded in limitations"
+      ],
+      "task_id": "live-github-demo-1"
+    },
+    "name": "Observe a live GitHub release",
+    "cases": [],
+    "phase": "after",
+    "run": "bundled-demo",
+    "mode": "live public GET"
+  }
+]

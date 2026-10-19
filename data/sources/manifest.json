@@ -1,0 +1,74 @@
+[
+  {
+    "provider": "stripe",
+    "repository": "stripe/openapi",
+    "path": "openapi/spec3.json",
+    "url": "https://raw.githubusercontent.com/stripe/openapi/bcfd59f49dcac84a84d63d304c62793dff6e5916/openapi/spec3.json",
+    "commit": "bcfd59f49dcac84a84d63d304c62793dff6e5916",
+    "source_commit_date": "2026-09-29T22:06:08Z",
+    "downloaded_at": "2026-10-19T03:09:41.024488+00:00",
+    "bytes": 8317513,
+    "sha256": "7cff4cc46d0654101a36a3302f7544640f5f73e4f3cad6f264f0e23c19fa1776",
+    "info": {
+      "contact": {
+        "email": "dev-platform@stripe.com",
+        "name": "Stripe Dev Platform Team",
+        "url": "https://stripe.com"
+      },
+      "description": "The Stripe REST API. Please see https://stripe.com/docs/api for more details.",
+      "termsOfService": "https://stripe.com/us/terms/",
+      "title": "Stripe API",
+      "version": "2026-09-30.endive",
+      "x-stripeSpecFilename": "spec3"
+    },
+    "operations": 612
+  },
+  {
+    "provider": "github",
+    "repository": "github/rest-api-description",
+    "path": "descriptions/api.github.com/api.github.com.json",
+    "url": "https://raw.githubusercontent.com/github/rest-api-description/bb754941722779d8a5b3a2f25a5fbb7ce794e1ea/descriptions/api.github.com/api.github.com.json",
+    "commit": "bb754941722779d8a5b3a2f25a5fbb7ce794e1ea",
+    "source_commit_date": "2026-10-17T23:38:25Z",
+    "downloaded_at": "2026-10-19T03:09:41.647716+00:00",
+    "bytes": 13502446,
+    "sha256": "3177ad6a86ca04c57a9bef3fc24e28a339efb8eb040c6f950af3d3ed2fee7fa3",
+    "info": {
+      "version": "1.1.4",
+      "title": "GitHub v3 REST API",
+      "description": "GitHub's v3 REST API.",
+      "license": {
+        "name": "MIT",
+        "url": "https://spdx.org/licenses/MIT"
+      },
+      "termsOfService": "https://docs.github.com/articles/github-terms-of-service",
+      "contact": {
+        "name": "Support",
+        "url": "https://support.github.com/contact?tags=dotcom-rest-api"
+      },
+      "x-github-plan": "api.github.com"
+    },
+    "operations": 1242
+  },
+  {
+    "provider": "slack",
+    "repository": "slackapi/slack-api-specs",
+    "path": "web-api/slack_web_openapi_v2_without_examples.json",
+    "url": "https://raw.githubusercontent.com/slackapi/slack-api-specs/dfea73e06d146c368d7f94b52ac90796dc4e27e1/web-api/slack_web_openapi_v2_without_examples.json",
+    "commit": "dfea73e06d146c368d7f94b52ac90796dc4e27e1",
+    "source_commit_date": "2020-10-06T21:27:48Z",
+    "downloaded_at": "2026-10-19T03:09:40.393502+00:00",
+    "bytes": 1039581,
+    "sha256": "8b92da26a3c5b11d20042a9f36d81f1fa6fc9382c5ddc471babb68b91936bc3a",
+    "info": {
+      "contact": {
+        "name": "Slack developer relations",
+        "url": "https://api.slack.com/support"
+      },
+      "description": "One way to interact with the Slack platform is its HTTP RPC-based Web API, a collection of methods requiring OAuth 2.0-based user, bot, or workspace tokens blessed with related OAuth scopes.",
+      "title": "Slack Web API",
+      "version": "1.7.0"
+    },
+    "operations": 174
+  }
+]

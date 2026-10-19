@@ -1,0 +1,9 @@
+Thenwake
+Copyright 2026 Thenwake contributors.
+
+Original project code is licensed under the Apache License, Version 2.0.
+
+This project can download API specifications and documentation from GitHub,
+Stripe and Slack. Those materials retain their original licenses and notices;
+they are not relicensed under this project's Apache license.
+See THIRD_PARTY_NOTICES.md and LICENSES/.

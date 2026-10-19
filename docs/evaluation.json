@@ -1,0 +1,1362 @@
+{
+  "scope": "Known regression set; same-author tasks, three previously seen providers, simulated provider responses",
+  "run_id": "source-backed-regression-1",
+  "corrected": {
+    "false_ready_or_complete": 0,
+    "passed": 41,
+    "total": 41
+  },
+  "structural_issues": 0,
+  "task_summaries": {
+    "n01": {
+      "false_ready_or_complete": 0,
+      "passed": 12,
+      "total": 12
+    },
+    "n02": {
+      "false_ready_or_complete": 0,
+      "passed": 8,
+      "total": 8
+    },
+    "n03": {
+      "false_ready_or_complete": 0,
+      "passed": 7,
+      "total": 7
+    },
+    "n04": {
+      "false_ready_or_complete": 0,
+      "passed": 7,
+      "total": 7
+    },
+    "n05": {
+      "false_ready_or_complete": 0,
+      "passed": 6,
+      "total": 6
+    },
+    "n06": {
+      "false_ready_or_complete": 0,
+      "passed": 1,
+      "total": 1
+    }
+  },
+  "cases": [
+    {
+      "case": "quantity_1",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "budget",
+          "outcome": "true"
+        }
+      ],
+      "expected": "ready",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        1
+      ],
+      "status": "ready",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_3",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "budget",
+          "outcome": "true"
+        }
+      ],
+      "expected": "ready",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        3
+      ],
+      "status": "ready",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_11",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "budget",
+          "outcome": "true"
+        }
+      ],
+      "expected": "ready",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        11
+      ],
+      "status": "ready",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_0",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "budget",
+          "outcome": "true"
+        }
+      ],
+      "expected": "ready",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        0
+      ],
+      "status": "ready",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_missing",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "unknown"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "'quantity'"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_string",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Preservation source has the wrong type"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "quantity_boolean",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Preservation source has the wrong type"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "wrong_item",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "false"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Preservation source identity mismatch"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "wrong_subscription",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "false"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Preservation source identity mismatch"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "forbidden",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "subscription",
+          "outcome": "unknown"
+        },
+        {
+          "id": "quantity",
+          "outcome": "unknown"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "budget",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preservation_failures": [
+        {
+          "id": "preserve_quantity",
+          "phase": "before",
+          "reason": "Preservation dependency is incomplete"
+        }
+      ],
+      "preview_calls": 0,
+      "sent_quantities": [],
+      "status": "unknown",
+      "task_id": "n01"
+    },
+    {
+      "case": "over_budget",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "budget",
+          "outcome": "false"
+        }
+      ],
+      "expected": "blocked",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        5
+      ],
+      "status": "blocked",
+      "task_id": "n01"
+    },
+    {
+      "case": "wrong_currency",
+      "checks": [
+        {
+          "id": "item_id",
+          "outcome": "true"
+        },
+        {
+          "id": "subscription",
+          "outcome": "true"
+        },
+        {
+          "id": "quantity",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "false"
+        },
+        {
+          "id": "budget",
+          "outcome": "true"
+        }
+      ],
+      "expected": "blocked",
+      "gaps": [],
+      "passed": true,
+      "preservation_contract_ok": true,
+      "preview_calls": 1,
+      "sent_quantities": [
+        5
+      ],
+      "status": "blocked",
+      "task_id": "n01"
+    },
+    {
+      "case": "success",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "amount",
+          "outcome": "true"
+        },
+        {
+          "id": "customer",
+          "outcome": "true"
+        }
+      ],
+      "expected": "complete",
+      "gaps": [],
+      "passed": true,
+      "status": "complete",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "processing",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "false"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "amount",
+          "outcome": "true"
+        },
+        {
+          "id": "customer",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_id",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "false"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "amount",
+          "outcome": "true"
+        },
+        {
+          "id": "customer",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_currency",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "false"
+        },
+        {
+          "id": "amount",
+          "outcome": "true"
+        },
+        {
+          "id": "customer",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_amount",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "amount",
+          "outcome": "false"
+        },
+        {
+          "id": "customer",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_customer",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "currency",
+          "outcome": "true"
+        },
+        {
+          "id": "amount",
+          "outcome": "true"
+        },
+        {
+          "id": "customer",
+          "outcome": "false"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "forbidden",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "status",
+          "outcome": "unknown"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "amount",
+          "outcome": "unknown"
+        },
+        {
+          "id": "customer",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "missing_response",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "status",
+          "outcome": "unknown"
+        },
+        {
+          "id": "currency",
+          "outcome": "unknown"
+        },
+        {
+          "id": "amount",
+          "outcome": "unknown"
+        },
+        {
+          "id": "customer",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n02",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "success",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "tag",
+          "outcome": "true"
+        },
+        {
+          "id": "draft",
+          "outcome": "true"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "true"
+        },
+        {
+          "id": "commitish",
+          "outcome": "true"
+        }
+      ],
+      "expected": "complete",
+      "gaps": [],
+      "passed": true,
+      "status": "complete",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "draft",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "tag",
+          "outcome": "true"
+        },
+        {
+          "id": "draft",
+          "outcome": "false"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "true"
+        },
+        {
+          "id": "commitish",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "prerelease",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "tag",
+          "outcome": "true"
+        },
+        {
+          "id": "draft",
+          "outcome": "true"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "false"
+        },
+        {
+          "id": "commitish",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_tag",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "tag",
+          "outcome": "false"
+        },
+        {
+          "id": "draft",
+          "outcome": "true"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "true"
+        },
+        {
+          "id": "commitish",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_sha",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "tag",
+          "outcome": "true"
+        },
+        {
+          "id": "draft",
+          "outcome": "true"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "true"
+        },
+        {
+          "id": "commitish",
+          "outcome": "false"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_id",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "false"
+        },
+        {
+          "id": "tag",
+          "outcome": "true"
+        },
+        {
+          "id": "draft",
+          "outcome": "true"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "true"
+        },
+        {
+          "id": "commitish",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "forbidden",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "tag",
+          "outcome": "unknown"
+        },
+        {
+          "id": "draft",
+          "outcome": "unknown"
+        },
+        {
+          "id": "prerelease",
+          "outcome": "unknown"
+        },
+        {
+          "id": "commitish",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n03",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "success",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "sha",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "true"
+        }
+      ],
+      "expected": "complete",
+      "gaps": [],
+      "passed": true,
+      "status": "complete",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "queued",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "sha",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "false"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "false"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "failure",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "sha",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "false"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_sha",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "sha",
+          "outcome": "false"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_id",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "false"
+        },
+        {
+          "id": "sha",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "forbidden",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "sha",
+          "outcome": "unknown"
+        },
+        {
+          "id": "status",
+          "outcome": "unknown"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "missing_conclusion",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "sha",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        },
+        {
+          "id": "conclusion",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n04",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "success",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "true"
+        },
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "deleted",
+          "outcome": "true"
+        },
+        {
+          "id": "bot",
+          "outcome": "true"
+        },
+        {
+          "id": "team",
+          "outcome": "true"
+        }
+      ],
+      "expected": "complete",
+      "gaps": [],
+      "passed": true,
+      "status": "complete",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "deleted",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "true"
+        },
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "deleted",
+          "outcome": "false"
+        },
+        {
+          "id": "bot",
+          "outcome": "true"
+        },
+        {
+          "id": "team",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "bot",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "true"
+        },
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "deleted",
+          "outcome": "true"
+        },
+        {
+          "id": "bot",
+          "outcome": "false"
+        },
+        {
+          "id": "team",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_id",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "true"
+        },
+        {
+          "id": "id",
+          "outcome": "false"
+        },
+        {
+          "id": "deleted",
+          "outcome": "true"
+        },
+        {
+          "id": "bot",
+          "outcome": "true"
+        },
+        {
+          "id": "team",
+          "outcome": "true"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "wrong_team",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "true"
+        },
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "deleted",
+          "outcome": "true"
+        },
+        {
+          "id": "bot",
+          "outcome": "true"
+        },
+        {
+          "id": "team",
+          "outcome": "false"
+        }
+      ],
+      "expected": "pending",
+      "gaps": [],
+      "passed": true,
+      "status": "pending",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "forbidden",
+      "checks": [
+        {
+          "id": "ok",
+          "outcome": "unknown"
+        },
+        {
+          "id": "id",
+          "outcome": "unknown"
+        },
+        {
+          "id": "deleted",
+          "outcome": "unknown"
+        },
+        {
+          "id": "bot",
+          "outcome": "unknown"
+        },
+        {
+          "id": "team",
+          "outcome": "unknown"
+        }
+      ],
+      "expected": "unknown",
+      "gaps": [],
+      "passed": true,
+      "status": "unknown",
+      "task_id": "n05",
+      "unsupported_fixture_operations": []
+    },
+    {
+      "case": "succeeded_is_not_future_irreversibility",
+      "checks": [
+        {
+          "id": "id",
+          "outcome": "true"
+        },
+        {
+          "id": "status",
+          "outcome": "true"
+        }
+      ],
+      "expected": "unverifiable",
+      "gaps": [
+        {
+          "check_ids": [],
+          "coverage": "unobservable",
+          "id": "future_value",
+          "limitation": "The standard PaymentIntent API cannot prove this unrestricted future guarantee. Passing snapshot checks cannot complete this task.",
+          "phase": "after",
+          "text": "Prove pi_new can never be disputed, refunded, reversed or otherwise lose economic value in the future."
+        }
+      ],
+      "passed": true,
+      "status": "unverifiable",
+      "task_id": "n06",
+      "unsupported_fixture_operations": []
+    }
+  ]
+}
