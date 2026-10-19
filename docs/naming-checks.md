@@ -1,28 +1,20 @@
-# Naming screen
+# Working-name screen
 
-Draft brand: **Thenwake** — wait for the evidence, then wake the agent.
+Ternela is the provisional name selected on 19 October 2026. It can change; see
+[rebranding](rebranding.md). Nothing has been registered, purchased or reserved.
 
-Checked 2026-10-19:
+Public checks on that date:
 
-| Candidate | .com RDAP | .dev RDAP | GitHub name search | PyPI / npm |
-|---|---|---|---|---|
-| Thenwake | No registration record | No registration record | 0 repositories | Both returned 404 |
-| Whenrail | No registration record | No registration record | 0 repositories | Both returned 404 |
-| Wakegrain | No registration record | No registration record | 0 repositories | Both returned 404 |
+- `ternela.com`: Verisign RDAP returned HTTP 404.
+- `ternela.dev`: Google Registry RDAP returned HTTP 404.
+- PyPI and npm returned HTTP 404 for the exact `ternela` package name.
+- GitHub name search found a substring match, `ArmyFlash/-ternelauto`, and no
+  exact repository-name match. Exact-name web searches found no obvious software brand.
 
-Checks used Verisign's .com RDAP, Google Registry's .dev RDAP, the public GitHub
-repository search API, and the public PyPI/npm registries. Exact-name web searches
-showed no obvious software-brand collision for these candidates. Cueplane was
-rejected after an existing repository and a registered .com were found.
+Sources: [Verisign](https://rdap.verisign.com/com/v1/domain/ternela.com),
+[Google Registry](https://pubapi.registry.google/rdap/domain/ternela.dev),
+[PyPI](https://pypi.org/pypi/ternela/json),
+[npm](https://registry.npmjs.org/ternela).
 
-A missing registration record is a potential availability signal, not a registrar
-quote, reservation or formal trademark clearance. No domain was purchased or
-registered. Final availability and pricing must be confirmed at a registrar.
-
-Sources for the recommended candidate:
-
-- https://rdap.verisign.com/com/v1/domain/thenwake.com
-- https://pubapi.registry.google/rdap/domain/thenwake.dev
-- https://api.github.com/search/repositories?q=thenwake+in%3Aname
-- https://pypi.org/pypi/thenwake/json
-- https://registry.npmjs.org/thenwake
+These are preliminary registration and collision checks, not trademark clearance
+or a registrar's availability or price quote. Recheck before registering a domain.

@@ -1,15 +1,11 @@
 {
-  "version": 1,
-  "arms": ["fixed", "adaptive", "full"],
-  "initial_retrieval": "Provider-local original BM25 top 20; full arm supplies all operation names",
-  "reason": "Use a lightweight baseline to isolate automatic expansion; Qdrant remains an optional index. This experiment does not attribute improvements to Qdrant.",
-  "adaptive_budget": "At most two evidence-expansion/replanning passes after initial discovery and compilation, maximum 12 operations per task and 16 targeted reads per task per expansion. At most one complete-directory fallback per suite.",
-  "expansion_signals": "Explicit planner operation/schema/policy/external-fact needs, partial requirements, structural/preservation validation issues, used field pointers and response dependency pointers. No private scenario results enter the planner.",
-  "quantity_policy": "An existing-item price-only Stripe invoice preview requires an explicit typed quantity copy from a completed correctly identified current-item observation. This is an explicitly documented provider boundary rule, not an automatically discovered universal law.",
-  "runtime_controls": "All arms receive the same preservation schema, policy, planning prompt and guarded runtime. Expansion changes only the evidence and permitted replanning budget.",
-  "suites": ["development", "previous_fresh", "new_fresh"],
-  "scoring": "Keep the old 52 literal expectations as a frozen score. Separately replay already documented refund-alias and workflow-list fixture corrections. Add strict quantity tests and 41 new frozen scenarios. No silent expectation changes.",
-  "inference": "Same signed-in default CLI backend; tools disabled. One completed result per stage; operational timeout 240 seconds, one byte-identical retry allowed. Never retry a completed result based on private grades.",
-  "fresh_freeze": "Freeze new task/scenario definitions before implementation; lock code/prompts/policy before new-fresh model runs. Same author is not blinded.",
-  "storage": "Canonical source snapshots gzip-compressed with original hashes. Content-addressed gzip blobs deduplicate prompts, payloads and outputs; per-run manifests retain provenance and usage. Generated reports together under documents/generated. Historical artifacts in a verified archive. Never archive secrets or dependency caches."
+  "version": 2,
+  "scope": "Source-checkout alpha; current task compiler and known synthetic regression suite.",
+  "initial_retrieval": "Provider-local BM25 top 20 over pinned official operation text; no hand-authored endpoint catalog.",
+  "adaptive_budget": "At most two expansion/replanning passes; at most 12 operations per task and 16 new schema reads per task per pass; at most one complete-directory fallback.",
+  "admission": "Shared validation runs during repair and before marking a compilation completed. It validates structure, documented operations and fields, pagination, phase references, context and response dependencies, and explicit typed-preservation policy. It does not prove task interpretation is semantically exhaustive.",
+  "quantity_policy": "Existing-item price-only Stripe invoice previews explicitly preserve the observed integer quantity of the identified subscription item. This is a reviewed provider policy, not an automatically discovered universal rule.",
+  "inference": "Signed-in Codex CLI; tools, web and apps disabled. Each stage permits one retry for an operational failure, never a completed answer rejected by a private grade. Each attempt has a 240-second timeout.",
+  "regression": "Six known tasks and 41 simulated scenarios, developed by the same author; not blinded or a production reliability benchmark.",
+  "storage": "Pinned specifications and pagination guidance are compressed. Immutable content-addressed gzip blobs retain payloads and provenance; SQLite stores watch, deduplication and outbox references. External cache and runtime records stay ignored under data/."
 }

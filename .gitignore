@@ -13,8 +13,11 @@ dist/
 data/**
 !data/sources/
 !data/sources/manifest.json
-docs_lab/v2/guides.json
 documents/generated/
 .impeccable/
 .codex/
 .agents/
+
+.ruff_cache/
+.pytest_cache/
+.coverage

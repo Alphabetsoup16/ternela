@@ -9,20 +9,66 @@ from observation_lab.runtime import compile_plan, evaluate
 
 class RuntimeTests(unittest.TestCase):
     def setUp(self):
-        self.task = {"id": "x", "tools": [{"id": "quote", "cost_units": 2, "fields": {
-            "amount": {"type": "number"}, "operation": {"type": "string"},
-            "done": {"type": "boolean"}}}]}
-        self.plan = {"task_id": "x", "checks": [
-            {"id": "budget", "phase": "before", "tool": "quote", "field": "amount", "op": "lte",
-             "value": 500, "max_age_seconds": 60, "reason": "Budget"},
-            {"id": "identity", "phase": "after", "tool": "quote", "field": "operation", "op": "eq",
-             "value": "op1", "max_age_seconds": 60, "reason": "Bind confirmation"},
-            {"id": "receipt", "phase": "after", "tool": "quote", "field": "done", "op": "eq",
-             "value": True, "max_age_seconds": 60, "reason": "Outcome"}],
-            "requirements": [{"text": "Budget", "check_ids": ["budget"]}], "unresolved": [],
-            "poll_interval_seconds": 30, "receipt_timeout_seconds": 600}
-        self.evidence = {"quote": {"data": {"amount": 450, "operation": "op1", "done": True},
-                                   "observed_at": 1000, "available": True}}
+        self.task = {
+            "id": "x",
+            "tools": [
+                {
+                    "id": "quote",
+                    "cost_units": 2,
+                    "fields": {
+                        "amount": {"type": "number"},
+                        "operation": {"type": "string"},
+                        "done": {"type": "boolean"},
+                    },
+                }
+            ],
+        }
+        self.plan = {
+            "task_id": "x",
+            "checks": [
+                {
+                    "id": "budget",
+                    "phase": "before",
+                    "tool": "quote",
+                    "field": "amount",
+                    "op": "lte",
+                    "value": 500,
+                    "max_age_seconds": 60,
+                    "reason": "Budget",
+                },
+                {
+                    "id": "identity",
+                    "phase": "after",
+                    "tool": "quote",
+                    "field": "operation",
+                    "op": "eq",
+                    "value": "op1",
+                    "max_age_seconds": 60,
+                    "reason": "Bind confirmation",
+                },
+                {
+                    "id": "receipt",
+                    "phase": "after",
+                    "tool": "quote",
+                    "field": "done",
+                    "op": "eq",
+                    "value": True,
+                    "max_age_seconds": 60,
+                    "reason": "Outcome",
+                },
+            ],
+            "requirements": [{"text": "Budget", "check_ids": ["budget"]}],
+            "unresolved": [],
+            "poll_interval_seconds": 30,
+            "receipt_timeout_seconds": 600,
+        }
+        self.evidence = {
+            "quote": {
+                "data": {"amount": 450, "operation": "op1", "done": True},
+                "observed_at": 1000,
+                "available": True,
+            }
+        }
 
     def test_missing_and_wrong_types_fail_closed(self):
         for value in (None, True, "450", float("nan"), float("inf")):
@@ -47,9 +93,17 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(evaluate(self.plan, self.task, self.evidence)["status"], "unknown")
 
     def test_malformed_connector_envelopes_cannot_crash_or_authorize(self):
-        for envelope in ("broken", [], 1, {"data": None}, {"data": []},
-                         {"data": {"amount": 450}, "observed_at": 1000, "available": "false"}):
-            self.assertEqual(evaluate(self.plan, self.task, {"quote": envelope})["status"], "unknown")
+        for envelope in (
+            "broken",
+            [],
+            1,
+            {"data": None},
+            {"data": []},
+            {"data": {"amount": 450}, "observed_at": 1000, "available": "false"},
+        ):
+            self.assertEqual(
+                evaluate(self.plan, self.task, {"quote": envelope})["status"], "unknown"
+            )
 
     def test_invalid_clocks_rejected(self):
         for now in (float("nan"), float("inf"), True):
@@ -61,13 +115,26 @@ class RuntimeTests(unittest.TestCase):
 
     def test_wrong_operation_cannot_confirm_and_deadline(self):
         self.evidence["quote"]["data"]["operation"] = "op_other"
-        self.assertEqual(evaluate(self.plan, self.task, self.evidence, "after")["status"], "pending")
-        self.assertEqual(evaluate(self.plan, self.task, self.evidence, "after", elapsed_seconds=600)["status"], "overdue")
+        self.assertEqual(
+            evaluate(self.plan, self.task, self.evidence, "after")["status"], "pending"
+        )
+        self.assertEqual(
+            evaluate(self.plan, self.task, self.evidence, "after", elapsed_seconds=600)["status"],
+            "overdue",
+        )
         self.evidence["quote"]["data"]["operation"] = "op1"
-        self.assertEqual(evaluate(self.plan, self.task, self.evidence, "after", elapsed_seconds=650)["status"], "complete")
+        self.assertEqual(
+            evaluate(self.plan, self.task, self.evidence, "after", elapsed_seconds=650)["status"],
+            "complete",
+        )
 
     def test_untrusted_plan_rejects_code_extra_fields_and_unknown_tools(self):
-        for key, value in (("tool", "os.system('bad')"), ("field", "__class__"), ("op", "eval"), ("value", True)):
+        for key, value in (
+            ("tool", "os.system('bad')"),
+            ("field", "__class__"),
+            ("op", "eval"),
+            ("value", True),
+        ):
             plan = copy.deepcopy(self.plan)
             plan["checks"][0][key] = value
             with self.assertRaises(ValueError):
@@ -78,9 +145,11 @@ class RuntimeTests(unittest.TestCase):
             compile_plan(plan, self.task)
 
     def test_plan_identity_unique_check_ids_and_requirement_references(self):
-        for change in (lambda p: p.update(task_id="other"),
-                       lambda p: p["checks"][1].update(id="budget"),
-                       lambda p: p["requirements"][0].update(check_ids=["invented"])):
+        for change in (
+            lambda p: p.update(task_id="other"),
+            lambda p: p["checks"][1].update(id="budget"),
+            lambda p: p["requirements"][0].update(check_ids=["invented"]),
+        ):
             plan = copy.deepcopy(self.plan)
             change(plan)
             with self.assertRaises(ValueError):
@@ -95,8 +164,11 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(evaluate(self.plan, self.task, self.evidence)["status"], "unmonitorable")
 
     def test_numeric_limits_and_nonfinite_values_rejected(self):
-        for key, value in (("poll_interval_seconds", 0), ("receipt_timeout_seconds", 601),
-                           ("poll_interval_seconds", True)):
+        for key, value in (
+            ("poll_interval_seconds", 0),
+            ("receipt_timeout_seconds", 601),
+            ("poll_interval_seconds", True),
+        ):
             plan = copy.deepcopy(self.plan)
             plan[key] = value
             with self.assertRaises(ValueError):
@@ -107,7 +179,9 @@ class RuntimeTests(unittest.TestCase):
 
     def test_checks_share_one_tool_read_per_evaluation(self):
         result = evaluate(self.plan, self.task, self.evidence, "after")
-        self.assertEqual((result["status"], result["tool_reads"], result["cost_units"]), ("complete", 1, 2))
+        self.assertEqual(
+            (result["status"], result["tool_reads"], result["cost_units"]), ("complete", 1, 2)
+        )
 
     def test_false_condition_blocks_even_if_other_evidence_unavailable(self):
         extra = copy.deepcopy(self.plan["checks"][0])

@@ -1,6 +1,6 @@
 # Third-party materials
 
-Thenwake's original code is Apache-2.0. External API specifications and documentation
+Ternela's original code is Apache-2.0. External API specifications and documentation
 retain their upstream terms. The setup command downloads public documentation into
 ignored local caches; those downloaded pages are not distributed in this repository.
 
@@ -21,5 +21,5 @@ The compiler can also fetch pagination guidance from
 Their URLs, retrieval times and hashes are recorded locally. Optional shape
 inference from a documentation example does not establish field availability.
 
-Provider names identify integrations and evidence sources. Thenwake is an
+Provider names identify integrations and evidence sources. Ternela is an
 independent project and does not claim their endorsement.

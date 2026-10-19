@@ -1,4 +1,4 @@
-<h1 align="center">Thenwake</h1>
+<h1 align="center">Ternela</h1>
 <p align="center"><strong>Give agents a reliable way to wait.</strong></p>
 <p align="center">Turn a task into evidence checks. Track what changes. Wake the agent with a receipt.</p>
 <p align="center">
@@ -16,7 +16,7 @@ An agent can understand “continue when this exact payment succeeds.” It stil
 to identify the right payment, inspect its amount and customer, recover missing
 observations, and remember what it was waiting for across restarts.
 
-Thenwake makes that wait explicit: **a task, an observation plan, a current decision,
+Ternela makes that wait explicit: **a task, an observation plan, a current decision,
 and a receipt explaining the evidence.** Fresh observations can establish readiness
 or completion. Missing, inaccessible or expired evidence stays unknown.
 
@@ -26,10 +26,10 @@ Requires **Python 3.11+**, **curl**, and macOS or Linux. No Python dependencies 
 provider credentials are needed for the bundled replay.
 
 ```sh
-git clone https://github.com/Alphabetsoup16/thenwake.git
-cd thenwake
-python3 -m thenwake.setup_demo
-python3 -m thenwake.demo
+git clone https://github.com/Alphabetsoup16/ternela.git ternela
+cd ternela
+python3 -m ternela.setup_demo
+python3 -m ternela.demo
 ```
 
 ```text
@@ -45,7 +45,7 @@ runs locally without network calls or model inference.
 For the interactive workbench:
 
 ```sh
-python3 -m thenwake
+python3 -m ternela
 # Open http://127.0.0.1:8765
 ```
 
@@ -81,7 +81,7 @@ acting on it.
 - **Recoverable waits.** SQLite persists watch state and a transactional wake-up
   outbox. Event IDs deduplicate retries; older caller revisions cannot overwrite
   newer observations.
-- **Inspectable decisions.** Receipts retain observations, executed reads, checks,
+- **Inspectable decisions.** Receipts retain observations, read attempts, checks,
   timestamps, source references and the plan hash in verified gzip blobs.
 
 ## Current scope
@@ -104,14 +104,14 @@ or make a later business action atomic with the observation.
 
 ## Evidence, not a headline benchmark
 
-The current implementation passes **86 unit/API tests** and **41/41 known regression
+The current implementation passes **108 unit/API tests** and **41/41 known regression
 scenarios**, with zero structural audit issues or false ready/complete outcomes in
 that regression set. Those scenarios use simulated responses and previously seen
 providers. They are not a blinded generalization or production reliability claim.
 
 ```sh
-python3 -m thenwake.check
-python3 -m thenwake.regression
+python3 -m ternela.check
+python3 -m ternela.regression
 ```
 
 [Read the evaluation and its limits →](docs/evaluation.md)
@@ -119,7 +119,8 @@ python3 -m thenwake.regression
 ## Explore
 
 [API and event contract](docs/api.md) · [Architecture](docs/architecture.md) ·
-[Contributing](CONTRIBUTING.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Contributing](CONTRIBUTING.md) · [Rebranding](docs/rebranding.md) ·
+[Audit](docs/audits/2026-10-19.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 Original code is licensed under [Apache 2.0](LICENSE). Downloaded provider materials
 retain their upstream licenses and attribution.

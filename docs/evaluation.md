@@ -4,9 +4,9 @@ The release includes six task descriptions, their compiled plans and 41 simulate
 behavioral scenarios. Run them against the current runtime with:
 
 ```sh
-python3 -m thenwake.setup_demo
-python3 -m thenwake.regression
-python3 -m thenwake.check
+python3 -m ternela.setup_demo
+python3 -m ternela.regression
+python3 -m ternela.check
 ```
 
 ## Recorded regression result
@@ -16,7 +16,7 @@ python3 -m thenwake.check
 | Scenario expectations met | 41 / 41 |
 | Structural audit issues | 0 |
 | False ready/complete outcomes | 0 in this set |
-| Unit/API tests | 86 |
+| Unit/API tests | 108 |
 
 The machine-readable recorded result is in [evaluation.json](evaluation.json).
 The synthetic task/probe fixtures are under `expansion_lab/fresh/`; the bundled
@@ -49,3 +49,7 @@ generalization, proof of all business semantics, or a production reliability SLA
 
 The workbench also supports a real public GitHub release read. Live reads are
 examples of the data path, not substitutes for a held-out benchmark.
+
+The [release audit](audits/2026-10-19.md) records additional boundary tests, a local
+performance measurement and a fresh compilation smoke test. A smoke test is not
+a held-out generalization benchmark.

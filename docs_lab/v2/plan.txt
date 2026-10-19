@@ -40,9 +40,13 @@ disagree on the condition are unknown. Ordinary literal comparisons remain eq/ne
 Before checks AND to ready; after checks AND to complete. A false condition means blocked
 before/pending after. Missing or incomplete evidence is unknown. Separate phase coverage.
 
-Map every requested condition to checks. Declare actual missing capabilities as partial,
-unobservable or missing_input. Do not call an implemented pagination primitive a missing
-capability. An ordinary recorded-state task evaluates observed API records; it does not
+Map every requested condition to checks. Declare missing capabilities as partial,
+unobservable or missing_input.
+Each observable requirement must name at least one executable check in the same phase.
+Execution constraints such as "read metadata only" belong in limitations and the allowed
+request operations. Do not invent an observable state requirement with no executable check
+for an execution constraint already enforced by the runtime's read-only policy.
+Do not call an implemented pagination primitive a missing capability. An ordinary recorded-state task evaluates observed API records; it does not
 require an atomic persistent truth guarantee unless the task asks for one. A preview is
 not a guarantee of a future charge; an API record is not proof of physical-world outcomes.
 Use conservative tie handling and pagination rather than prose-only prerequisites.

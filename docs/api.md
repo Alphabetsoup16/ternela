@@ -1,22 +1,33 @@
 # API and event contract
 
-Start `python3 -m thenwake` from the repository checkout. The service binds to
+Start `python3 -m ternela` from the repository checkout. The service binds to
 `127.0.0.1:8765`; its session token is intended for this local prototype.
 
 ```python
-from thenwake import Client
+from ternela import Client
 
 client = Client()
 watch = client.watch("n02")  # Bundled payment example; no provider request.
 request_id = watch["plan"]["requests"][0]["id"]
 
 # Explicitly simulated provider evidence.
-client.submit(watch["id"], event_id="payment-observation-1", revision=1,
-    snapshots={request_id: {
-        "http_status": 200,
-        "body": {"id": "pi_new", "status": "succeeded", "currency": "usd",
-                 "amount_received": 4200, "customer": "cus_new"}
-    }})
+client.submit(
+    watch["id"],
+    event_id="payment-observation-1",
+    revision=1,
+    snapshots={
+        request_id: {
+            "http_status": 200,
+            "body": {
+                "id": "pi_new",
+                "status": "succeeded",
+                "currency": "usd",
+                "amount_received": 4200,
+                "customer": "cus_new",
+            },
+        }
+    },
+)
 
 for message in client.wakeups(watch["id"]):
     current = client.get(watch["id"])
@@ -65,6 +76,7 @@ jobs are not a restart-resumable distributed queue.
 | POST | `/api/watches` | Create a watch from a template or completed job |
 | GET | `/api/watches/{id}` | Read current state, checking evidence expiry |
 | POST | `/api/watches/{id}/events` | Submit a complete observation snapshot |
+| GET | `/api/watches/{id}/receipt` | Download the current receipt as exact JSON |
 | POST | `/api/watches/{id}/live` | Collect bounded public GitHub evidence |
 | GET | `/api/watches/{id}/outbox?after={cursor}` | Read up to 100 historical transitions |
 | POST | `/api/watches/{id}/ack` | Acknowledge a transition |
@@ -80,3 +92,7 @@ remain in ignored local `data/`, stored as gzip blobs with SHA-256 verification;
 SQLite contains watch metadata and outbox references. A task submitted for compilation
 is sent to the configured Codex inference backend. Do not use the local prototype as
 a public internet service.
+
+The workbench formats observed values on the server, including large integers.
+Its snapshot editor rejects integers outside JavaScript's safe integer range; use
+the Python SDK for those values. Receipt downloads preserve the server's JSON bytes.

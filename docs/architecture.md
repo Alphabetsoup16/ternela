@@ -1,6 +1,6 @@
 # Architecture
 
-Thenwake separates interpretation from evaluation. A model helps construct a
+Ternela separates interpretation from evaluation. A model helps construct a
 data-only observation plan; ordinary code evaluates captured evidence against it.
 
 ```mermaid
@@ -22,7 +22,10 @@ flowchart TD
 
 The compiler discovers operations in pinned specifications, reads relevant schema
 branches and expands retrieval on explicit evidence gaps. Its output is JSON data,
-not executable code. The current inference backend is a signed-in Codex CLI with
+not executable code. Compilation and watch creation share admission rules. A plan rejected at admission
+is retained as a failed run and is not offered as a completed task.
+
+The current inference backend is a signed-in Codex CLI with
 tools, web and apps disabled. Private scenario expectations do not enter inference.
 
 The supplied context binds exact resource identifiers and thresholds. The
@@ -45,7 +48,7 @@ changes atomic.
 
 Watch metadata, deduplication keys and wake-up references live in SQLite. A receipt
 and its changed-decision outbox entry are committed in the same database
-transaction. Full payloads live in immutable SHA-256-addressed gzip blobs, written
+transaction. Full payloads live in immutable SHA-256-addressed gzip blobs, flushed to disk and atomically published
 before that transaction refers to them. A crash can leave an unreferenced blob;
 it cannot make the database reference a receipt that has not been written.
 
@@ -56,7 +59,7 @@ persists an unknown decision after the watch's freshness window.
 
 | Package | Responsibility |
 |---|---|
-| `thenwake/` | Public entry points, setup, deterministic demo and checks |
+| `ternela/` | Public entry points, shared admission, branding, setup and checks |
 | `workbench/` | Local service, event-fed watches, SDK and interface |
 | `source_lab/` | Separately attributed documentation supplements |
 | `safety_lab/` | Phase and preservation validation |
@@ -64,9 +67,13 @@ persists an unknown decision after the watch's freshness window.
 | `docs_lab/`, `observation_lab/` | Shared schema, pagination, audit and comparison primitives |
 
 Package names ending in `_lab` preserve the experiment's implementation lineage.
-The `thenwake` entry points are the public starting point. This release runs from
+The `ternela` entry points are the public starting point. This release runs from
 a source checkout; no PyPI distribution has been published.
 
 Authenticated provider scheduling, webhook verification, distributed delivery and
 multi-tenant authorization are future service layers. Current event ordering is
 a caller-managed revision sequence for one watch, not a cross-provider causal clock.
+
+Display branding is isolated from stable import and storage names. See
+[rebranding](rebranding.md). Source checkout or editable installation is supported;
+standalone wheel installation has not been validated.

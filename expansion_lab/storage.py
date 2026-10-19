@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """Deterministic, verified gzip blobs with small portable run manifests."""
+
 import gzip
 import hashlib
 import json
+import math
+import os
 import uuid
 from pathlib import Path
 
@@ -14,15 +17,45 @@ def sha(data):
 
 
 def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    ).encode()
+
+
+def atomic_write(path, data):
+    """Flush bytes before publishing their name, then flush directory metadata."""
+    path = Path(path)
+    # Persist newly created directory entries from the existing ancestor down.
+    missing = []
+    parent = path.parent
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    for directory in reversed(missing):
+        directory.mkdir(exist_ok=True)
+        sync_directory(directory.parent)
+    temporary = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+        sync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def sync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
 
 
 def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2) + "\n")
-    temporary.replace(path)
+    atomic_write(path, (json.dumps(value, indent=2, allow_nan=False) + "\n").encode())
 
 
 class Store:
@@ -30,18 +63,26 @@ class Store:
         self.root = Path(root or PROJECT / "data")
 
     def put(self, value, media_type="application/json"):
-        data = canonical(value) if media_type == "application/json" else value.encode() if isinstance(value, str) else value
+        data = (
+            canonical(value)
+            if media_type == "application/json"
+            else value.encode()
+            if isinstance(value, str)
+            else value
+        )
         digest = sha(data)
         path = self.root / "blobs" / digest[:2] / (digest + ".gz")
         if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
             packed = gzip.compress(data, compresslevel=9, mtime=0)
-            temporary = path.with_suffix("." + uuid.uuid4().hex + ".tmp")
-            temporary.write_bytes(packed)
-            temporary.replace(path)
+            atomic_write(path, packed)
         if sha(gzip.decompress(path.read_bytes())) != digest:
             raise ValueError("Corrupt content-addressed blob")
-        return {"sha256": digest, "bytes": len(data), "gzip_bytes": path.stat().st_size, "media_type": media_type}
+        return {
+            "sha256": digest,
+            "bytes": len(data),
+            "gzip_bytes": path.stat().st_size,
+            "media_type": media_type,
+        }
 
     def get(self, ref):
         digest = ref["sha256"]
@@ -51,3 +92,32 @@ class Store:
         if sha(data) != digest:
             raise ValueError("Corrupt content-addressed blob")
         return json.loads(data) if ref["media_type"] == "application/json" else data.decode()
+
+
+def strict_json(raw):
+    def object_pairs(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("Duplicate JSON object key")
+            value[key] = item
+        return value
+
+    def invalid_constant(value):
+        raise ValueError("JSON numbers must be finite")
+
+    value = json.loads(raw, object_pairs_hook=object_pairs, parse_constant=invalid_constant)
+
+    def inspect(item, depth=0):
+        if depth > 64:
+            raise ValueError("JSON nesting exceeds 64 levels")
+        if type(item) is float and not math.isfinite(item):
+            raise ValueError("JSON numbers must be finite")
+        children = (
+            item.values() if isinstance(item, dict) else item if isinstance(item, list) else ()
+        )
+        for child in children:
+            inspect(child, depth + 1)
+
+    inspect(value)
+    return value

@@ -1,26 +1,522 @@
 // SPDX-License-Identifier: Apache-2.0
 "use strict";
-const $=id=>document.getElementById(id);
-let token,templates=[],current,watch,busy=false,polling=false,lastReceipt,jobPoll,lastMessages,lastRendered;
-const labels={success:"Matching evidence",quantity_11:"Quantity is 11",quantity_0:"Quantity is zero",quantity_string:"Quantity is a string",wrong_item:"Wrong subscription item",wrong_subscription:"Wrong subscription",over_budget:"Preview exceeds budget",wrong_currency:"Wrong currency",forbidden:"Provider denies access",processing:"Payment still processing",wrong_amount:"Wrong amount received",wrong_customer:"Wrong customer",missing_response:"No response captured",draft:"Release is a draft",prerelease:"Release is a prerelease",wrong_sha:"Wrong commit SHA",wrong_tag:"Wrong release tag",queued:"Check is queued",failure:"Check failed",missing_conclusion:"Conclusion is missing",deleted:"User is deactivated",bot:"User is a bot",wrong_team:"Wrong workspace",missing_field:"A required observation is absent"};
-const descriptions={ready:"The observed preconditions pass. This does not perform the business action.",complete:"The observed API state satisfies this task’s checks.",blocked:"Observed evidence fails a precondition. The agent should wait or revise its action.",pending:"The observed state has not met the completion conditions.",unknown:"Evidence is missing, expired, inaccessible, or fails a preservation guard.",unverifiable:"The available evidence cannot establish the task’s full claim."};
-function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
-function fail(error){$("error").hidden=false;$("error").textContent=error.message||String(error);}
-function clearError(){$("error").hidden=true;}
-async function api(path,body){const response=await fetch(path,{method:body===undefined?"GET":"POST",headers:body===undefined?{}:{"Content-Type":"application/json","X-Observation-Token":token},body:body===undefined?undefined:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw new Error(value.error||`Request failed (${response.status})`);return value;}
-function bind(value){if(typeof value==="string"&&value.startsWith("$context."))return current.task.context[value.slice(9)];if(Array.isArray(value))return value.map(bind);if(value&&typeof value==="object")return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,bind(v)]));return value;}
-function pointer(value,path){if(path==="")return value;for(const part of path.slice(1).split("/")){if(value===null||value===undefined)throw new Error("Missing field");value=value[part.replace(/~1/g,"/").replace(/~0/g,"~")];}return value;}
-function pretty(value){return value===undefined?"Missing":typeof value==="string"?value:JSON.stringify(value);}
-function taskNav(){const nav=$("tasks");nav.replaceChildren();for(const t of templates){const button=node("button",t.name);button.type="button";button.setAttribute("aria-current",String(current?.task.id===t.task.id));button.append(node("small",`${t.task.provider} · ${t.mode}`));button.addEventListener("click",()=>choose(t));nav.append(button);}}
-function setBusy(value){busy=value;for(const id of ["apply","expire","new-watch"])$(id).disabled=value;$("apply").textContent=value?"Observing…":(current?.mode==="live public GET"||(current?.mode==="caller-supplied snapshot"&&current?.task.provider==="github"))?"Read GitHub now":"Apply update";}
-async function choose(template){if(busy)return;clearError();setBusy(true);try{const next=await api("/api/watches",template.job?{job_id:template.job,phase:template.phase}:{template_id:template.task.id});current=template;watch=next;history.replaceState(null,"",`/?watch=${watch.id}`);lastReceipt=null;lastMessages=null;taskNav();renderPlan();await refresh();}catch(error){fail(error);}finally{setBusy(false);}}
-function renderPlan(){$("event-note").textContent="";const plan=current.plan;$("task-title").textContent=current.name;$("task-subtitle").textContent=`${current.task.provider} · ${current.run} · compiled from official API documentation`;$("task-text").textContent=current.task.task;$("phase").textContent=current.phase==="before"?"Before the action":"After the action";$("plan-json").textContent=JSON.stringify(plan,null,2);const requests=$("requests");requests.replaceChildren();const used=new Set(plan.checks.filter(c=>c.phase===current.phase).map(c=>c.request_id));for(const g of plan.preservations)if(used.has(g.target_request_id))used.add(g.source_request_id);for(const request of plan.requests.filter(r=>used.has(r.id))){const li=node("li");li.append(node("code",request.operation),node("p",request.purpose));requests.append(li);}if(!requests.children.length)requests.append(node("li","No sufficient observation procedure was established."));const guards=plan.preservations.filter(g=>g.phase===current.phase);$("guard-note").hidden=!guards.length;$("guard-note").textContent=guards.map(g=>`Preserve ${g.source_pointer} exactly. ${g.reason}`).join(" ");const options=$("case");options.replaceChildren(...current.cases.map(c=>{const option=node("option",labels[c]||c);option.value=c;return option;}));const live=current.mode==="live public GET",custom=current.mode==="caller-supplied snapshot";$("mode").textContent=live?"LIVE PUBLIC API":custom?"CALLER SNAPSHOT":"SIMULATED RESPONSES";$("observation-heading").textContent=live?"Read a public API":custom?"Supply an observation":"Replay an observation";$("mode-explanation").textContent=live?"Fetch the public GitHub API now. Only repository GET requests are allowed; no account is connected.":custom?"Submit captured responses for the request IDs in the plan. For a public GitHub task, you can also collect live evidence.":"Change the fixture response below. The compiled plan and evaluation engine stay the same.";$("case-label").hidden=live||custom;$("expire").hidden=live||custom;$("replay-form").hidden=custom&&current.task.provider!=="github";$("snapshot-form").hidden=!custom;$("apply").textContent=live||custom?"Read GitHub now":"Apply update";}
-function freshness(){const receipt=watch?.receipt;$("expiry").textContent=receipt?(receipt.result.stale?"A fresh observation is needed":`Fresh for ${Math.max(0,Math.ceil(receipt.expires_at-Date.now()/1000))}s`):"No observation yet";}
-function render(){freshness();const receipt=watch.receipt,result=receipt?.result,status=result?.status||"unknown";const renderedKey=`${watch.id}:${watch.revision}:${receipt?.evaluated_at}:${status}`;if(renderedKey===lastRendered)return;lastRendered=renderedKey;const evidenceMode=receipt?.mode||current.mode;$("decision-mode").textContent=evidenceMode==="simulated replay"?"Simulated evidence":evidenceMode==="live public GitHub GET"||evidenceMode==="live public GET"?"Live GitHub read":"Caller snapshot";document.querySelector(".decision").dataset.status=status;$("decision-title").textContent=receipt?(result.stale?"Evidence expired":status[0].toUpperCase()+status.slice(1)):"Waiting for evidence";$("decision-detail").textContent=receipt?descriptions[status]:"Apply an observation to evaluate this task.";$("revision").textContent=`Revision ${watch.revision}`;$("expiry").textContent=receipt?(result.stale?"A fresh observation is needed":`Fresh for ${Math.max(0,Math.ceil(receipt.expires_at-Date.now()/1000))}s`):"No observation yet";const checks=current.plan.checks.filter(c=>c.phase===current.phase);$("check-count").textContent=`${checks.length} checks`;const outcomes=Object.fromEntries((result?.checks||[]).map(c=>[c.id,c.outcome]));const rows=checks.map(check=>{const row=node("tr"),field=node("td");field.append(node("span",check.reason),node("code",`${check.collection_pointer}${check.field_pointer}`||"Response"));let actual;try{let value=pointer(receipt?.observations?.[check.request_id]?.body,check.collection_pointer);if(Array.isArray(value)){const selector=bind(JSON.parse(check.selector_json));value=value.filter(v=>Object.entries(selector).every(([p,x])=>pointer(v,p)===x));if(value.length===1)value=value[0];}actual=pointer(value,check.field_pointer);}catch{}const expected=bind(JSON.parse(check.value_json));const resultCell=node("td");resultCell.append(node("span",outcomes[check.id]||(result?.stale?"Expired":receipt?"Not evaluated":"Waiting"),`outcome ${outcomes[check.id]||""}`));row.append(field,node("td",`${check.op} ${pretty(expected)}`),node("td",receipt?pretty(actual):"—"),resultCell);return row;});$("checks").replaceChildren(...rows);const gaps=$("gaps");gaps.replaceChildren();for(const gap of result?.gaps||current.plan.requirements.filter(r=>r.phase===current.phase&&r.coverage!=="observable"))gaps.append(node("p",gap.limitation||gap.text));for(const failure of result?.preservation_failures||[])gaps.append(node("p",`Preservation guard: ${failure.reason}`));$("download").disabled=!receipt;$("receipt-json").textContent=receipt?JSON.stringify(receipt,null,2):"No receipt yet.";$("receipt-description").textContent=receipt?`Plan ${receipt.plan_sha256.slice(0,12)}… · ${Object.values(receipt.observations).reduce((n,o)=>n+o.trace.length,0)} executed reads · ${receipt.mode}`:"Each update stores its input, executed reads, checks, timestamps and plan hash.";if(receipt&&lastReceipt!==receipt.event_id+status){const el=document.querySelector(".decision");el.classList.remove("receipt-updated");void el.offsetWidth;el.classList.add("receipt-updated");lastReceipt=receipt.event_id+status;}}
-async function refresh(){if(!watch||polling)return;polling=true;const identity=watch.id;try{const [next,messages]=await Promise.all([api(`/api/watches/${identity}`),api(`/api/watches/${identity}/outbox?recent=1`)]);if(watch.id!==identity)return;watch=next;render();$("wake-count").textContent=messages.length;const messageKey=JSON.stringify(messages.map(m=>[m.id,m.acked]));if(messageKey===lastMessages)return;lastMessages=messageKey;const list=$("wakeups");list.replaceChildren();if(!messages.length)list.append(node("li","No decision changes yet.","empty-wake"));for(const message of messages.slice().reverse()){const li=node("li"),status=message.receipt.result.status;li.append(node("strong",message.receipt.result.stale?"Evidence expired":`${status[0].toUpperCase()+status.slice(1)}`));const time=node("time",new Date(message.created*1000).toLocaleTimeString());time.dateTime=new Date(message.created*1000).toISOString();li.append(time,node("p",`Revision ${message.receipt.revision} · ${message.receipt.result.stale?"Freshness window elapsed":"Evidence decision changed"}`,"wake-reason"));const ack=node("button",message.acked?"Acknowledged":"Acknowledge");ack.disabled=!!message.acked;ack.addEventListener("click",async()=>{try{await api(`/api/watches/${identity}/ack`,{id:message.id});await refresh();}catch(error){fail(error);}});li.append(ack);list.append(li);}}catch(error){fail(error);}finally{polling=false;}}
-async function update(stale=false){if(busy||!watch)return;setBusy(true);clearError();try{const live=current.mode==="live public GET"||current.mode==="caller-supplied snapshot";const delivered=await api(`/api/watches/${watch.id}/${live?"live":"replay"}`,live?{}:{case:$("case").value,stale});$("event-note").textContent=delivered.accepted?"Observation recorded. The decision receipt is saved.":"Older observation ignored. Newer evidence remains in effect until it expires.";await refresh();}catch(error){fail(error);}finally{setBusy(false);}}
-$("replay-form").addEventListener("submit",event=>{event.preventDefault();update();});$("expire").addEventListener("click",()=>update(true));$("new-watch").addEventListener("click",()=>choose(current));$("snapshot-form").addEventListener("submit",async event=>{event.preventDefault();try{await api(`/api/watches/${watch.id}/events`,{event_id:crypto.randomUUID(),revision:watch.revision+1,snapshots:JSON.parse($("snapshot-json").value)});await refresh();}catch(error){fail(error);}});
-$("download").addEventListener("click",()=>{if(!watch?.receipt)return;const url=URL.createObjectURL(new Blob([JSON.stringify(watch.receipt,null,2)],{type:"application/json"}));const link=node("a");link.href=url;link.download=`observation-${watch.id}-r${watch.revision}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-$("compile-form").addEventListener("submit",async event=>{event.preventDefault();clearError();const button=$("compile");button.disabled=true;try{const context=JSON.parse($("context-json").value);const job=await api("/api/compile",{task:$("new-task").value,provider:$("provider").value,context});$("job-status").textContent="Compiling from API docs… You can keep using the workbench.";const phase=$("new-phase").value;jobPoll=setInterval(async()=>{try{const value=await api(`/api/jobs/${job.id}`);$("job-status").textContent=value.status==="failed"?value.error:`${value.status} · ${job.id}`;if(value.status==="completed"||value.status==="failed"){clearInterval(jobPoll);button.disabled=false;if(value.status==="completed"){const template={task:value.task,plan:value.plan,name:"Your compiled task",cases:[],phase,run:value.run,job:job.id,mode:"caller-supplied snapshot"};templates.push(template);await choose(template);$("workspace").scrollIntoView({behavior:"smooth"});}}}catch(error){clearInterval(jobPoll);button.disabled=false;fail(error);}},2000);}catch(error){button.disabled=false;fail(error);}});
-async function start(){try{const boot=await api("/api/bootstrap");token=boot.token;templates=boot.templates;$("evaluation-json").textContent=JSON.stringify({evaluation:boot.evaluation,supplementary_sources:boot.sources},null,2);$("loading").hidden=true;$("content").hidden=false;const saved=new URLSearchParams(location.search).get("watch");if(saved){watch=await api(`/api/watches/${encodeURIComponent(saved)}`);const template=templates.find(t=>t.task.id===watch.task.id);current={...(template||{name:"Your saved task",cases:[]}),task:watch.task,plan:watch.plan,phase:watch.phase,run:watch.task._origin_run||"Saved plan",mode:watch.task._mode||template?.mode||"caller-supplied snapshot"};taskNav();renderPlan();await refresh();}else await choose(templates[0]);setInterval(()=>{if(!busy)refresh();},2000);setInterval(()=>{if(watch?.receipt)freshness();},1000);}catch(error){$("loading").textContent="Could not load the workbench. Reload to retry.";fail(error);}}
+const $ = (id) => document.getElementById(id);
+let token,
+  templates = [],
+  current,
+  watch,
+  busy = false,
+  polling = false,
+  lastReceipt,
+  jobPoll,
+  lastMessages,
+  lastRendered;
+const labels = {
+  success: "Matching evidence",
+  quantity_11: "Quantity is 11",
+  quantity_0: "Quantity is zero",
+  quantity_string: "Quantity is a string",
+  wrong_item: "Wrong subscription item",
+  wrong_subscription: "Wrong subscription",
+  over_budget: "Preview exceeds budget",
+  wrong_currency: "Wrong currency",
+  forbidden: "Provider denies access",
+  processing: "Payment still processing",
+  wrong_amount: "Wrong amount received",
+  wrong_customer: "Wrong customer",
+  missing_response: "No response captured",
+  draft: "Release is a draft",
+  prerelease: "Release is a prerelease",
+  wrong_sha: "Wrong commit SHA",
+  wrong_tag: "Wrong release tag",
+  queued: "Check is queued",
+  failure: "Check failed",
+  missing_conclusion: "Conclusion is missing",
+  deleted: "User is deactivated",
+  bot: "User is a bot",
+  wrong_team: "Wrong workspace",
+  missing_field: "A required observation is absent",
+};
+const descriptions = {
+  ready:
+    "The observed preconditions pass. This does not perform the business action.",
+  complete: "The observed API state satisfies this task’s checks.",
+  blocked:
+    "Observed evidence fails a precondition. The agent should wait or revise its action.",
+  pending: "The observed state has not met the completion conditions.",
+  unknown:
+    "Evidence is missing, expired, inaccessible, or fails a preservation guard.",
+  unverifiable:
+    "The available evidence cannot establish the task’s full claim.",
+};
+function node(tag, text, className) {
+  const n = document.createElement(tag);
+  if (text !== undefined) n.textContent = text;
+  if (className) n.className = className;
+  return n;
+}
+function fail(error) {
+  $("error").hidden = false;
+  $("error").textContent = error.message || String(error);
+}
+function clearError() {
+  $("error").hidden = true;
+}
+async function api(path, body) {
+  const response = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers:
+      body === undefined
+        ? {}
+        : { "Content-Type": "application/json", "X-Observation-Token": token },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const value = await response.json();
+  if (!response.ok)
+    throw new Error(value.error || `Request failed (${response.status})`);
+  return value;
+}
+function taskNav() {
+  const nav = $("tasks");
+  nav.replaceChildren();
+  for (const t of templates) {
+    const button = node("button", t.name);
+    button.type = "button";
+    button.setAttribute("aria-current", String(current?.task.id === t.task.id));
+    button.append(node("small", `${t.task.provider} · ${t.mode}`));
+    button.addEventListener("click", () => choose(t));
+    nav.append(button);
+  }
+}
+function setBusy(value) {
+  busy = value;
+  for (const id of ["apply", "expire", "new-watch"]) $(id).disabled = value;
+  document.querySelector("#snapshot-form button").disabled = value;
+  $("apply").textContent = value
+    ? "Observing…"
+    : current?.mode === "live public GET" ||
+        (current?.mode === "caller-supplied snapshot" &&
+          current?.task.provider === "github")
+      ? "Read GitHub now"
+      : "Apply update";
+}
+async function choose(template) {
+  if (busy) return;
+  clearError();
+  setBusy(true);
+  try {
+    const next = await api(
+      "/api/watches",
+      template.job
+        ? { job_id: template.job, phase: template.phase }
+        : { template_id: template.task.id },
+    );
+    current = template;
+    watch = next;
+    history.replaceState(null, "", `/?watch=${watch.id}`);
+    lastReceipt = null;
+    lastMessages = null;
+    taskNav();
+    renderPlan();
+    render();
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+  }
+}
+function renderPlan() {
+  $("event-note").textContent = "";
+  const plan = watch.active_plan || current.plan;
+  $("task-title").textContent = current.name;
+  $("task-subtitle").textContent =
+    `${current.task.provider} · ${current.run} · compiled from official API documentation`;
+  $("task-text").textContent = current.task.task;
+  $("phase").textContent =
+    current.phase === "before" ? "Before the action" : "After the action";
+  $("plan-json").textContent = JSON.stringify(plan, null, 2);
+  const requests = $("requests");
+  requests.replaceChildren();
+  for (const request of plan.requests) {
+    const li = node("li");
+    li.append(node("code", request.operation), node("p", request.purpose));
+    requests.append(li);
+  }
+  if (!requests.children.length)
+    requests.append(
+      node("li", "No sufficient observation procedure was established."),
+    );
+  const guards = plan.preservations.filter((g) => g.phase === current.phase);
+  $("guard-note").hidden = !guards.length;
+  $("guard-note").textContent = guards
+    .map((g) => `Preserve ${g.source_pointer} exactly. ${g.reason}`)
+    .join(" ");
+  const options = $("case");
+  options.replaceChildren(
+    ...current.cases.map((c) => {
+      const option = node("option", labels[c] || c);
+      option.value = c;
+      return option;
+    }),
+  );
+  const live = current.mode === "live public GET",
+    custom = current.mode === "caller-supplied snapshot";
+  $("mode").textContent = live
+    ? "LIVE PUBLIC API"
+    : custom
+      ? "CALLER SNAPSHOT"
+      : "SIMULATED RESPONSES";
+  $("observation-heading").textContent = live
+    ? "Read a public API"
+    : custom
+      ? "Supply an observation"
+      : "Replay an observation";
+  $("mode-explanation").textContent = live
+    ? "Fetch the public GitHub API now. Only repository GET requests are allowed; no account is connected."
+    : custom
+      ? "Submit captured responses for the request IDs in the plan. For a public GitHub task, you can also collect live evidence."
+      : "Change the fixture response below. The compiled plan and evaluation engine stay the same.";
+  $("case-label").hidden = live || custom;
+  $("expire").hidden = live || custom;
+  $("replay-form").hidden = custom && current.task.provider !== "github";
+  $("snapshot-form").hidden = !custom;
+  $("apply").textContent = live || custom ? "Read GitHub now" : "Apply update";
+}
+function freshness() {
+  const receipt = watch?.receipt;
+  $("expiry").textContent = receipt
+    ? receipt.result.stale || Date.now() / 1000 >= receipt.expires_at
+      ? "A fresh observation is needed"
+      : `Fresh for ${Math.max(0, Math.ceil(receipt.expires_at - Date.now() / 1000))}s`
+    : "No observation yet";
+}
+function render() {
+  freshness();
+  const receipt = watch.receipt,
+    result = receipt?.result,
+    expired =
+      !!receipt && (result.stale || Date.now() / 1000 >= receipt.expires_at),
+    status = expired ? "unknown" : result?.status || "unknown";
+  const renderedKey = `${watch.id}:${watch.revision}:${receipt?.evaluated_at}:${status}`;
+  if (renderedKey === lastRendered) return;
+  lastRendered = renderedKey;
+  const evidenceMode = receipt?.mode || current.mode;
+  $("decision-mode").textContent =
+    evidenceMode === "simulated replay"
+      ? "Simulated evidence"
+      : evidenceMode === "live public GitHub GET" ||
+          evidenceMode === "live public GET"
+        ? "Live GitHub read"
+        : "Caller snapshot";
+  document.querySelector(".decision").dataset.status = status;
+  $("decision-title").textContent = receipt
+    ? expired
+      ? "Evidence expired"
+      : status[0].toUpperCase() + status.slice(1)
+    : "Waiting for evidence";
+  $("decision-detail").textContent = receipt
+    ? descriptions[status]
+    : "Apply an observation to evaluate this task.";
+  $("revision").textContent = `Revision ${watch.revision}`;
+  $("expiry").textContent = receipt
+    ? expired
+      ? "A fresh observation is needed"
+      : `Fresh for ${Math.max(0, Math.ceil(receipt.expires_at - Date.now() / 1000))}s`
+    : "No observation yet";
+  const checks = current.plan.checks.filter((c) => c.phase === current.phase);
+  $("check-count").textContent = `${checks.length} checks`;
+  const outcomes = Object.fromEntries(
+    (expired ? [] : result?.checks || []).map((c) => [c.id, c.outcome]),
+  );
+  const rows = checks.map((check) => {
+    const row = node("tr"),
+      field = node("td");
+    field.append(
+      node("span", check.reason),
+      node(
+        "code",
+        `${check.collection_pointer}${check.field_pointer}` || "Response",
+      ),
+    );
+    const evidence = watch.check_evidence?.[check.id];
+    const resultCell = node("td");
+    resultCell.append(
+      node(
+        "span",
+        outcomes[check.id] ||
+          (expired ? "Expired" : receipt ? "Not evaluated" : "Waiting"),
+        `outcome ${outcomes[check.id] || ""}`,
+      ),
+    );
+    row.append(
+      field,
+      node("td", `${check.op} ${evidence?.expected_json ?? "Unavailable"}`),
+      node("td", receipt ? (evidence?.actual_json ?? "Unavailable") : "—"),
+      resultCell,
+    );
+    return row;
+  });
+  $("checks").replaceChildren(...rows);
+  const gaps = $("gaps");
+  gaps.replaceChildren();
+  for (const gap of result?.gaps ||
+    current.plan.requirements.filter(
+      (r) => r.phase === current.phase && r.coverage !== "observable",
+    ))
+    gaps.append(node("p", gap.limitation || gap.text));
+  for (const failure of result?.preservation_failures || [])
+    gaps.append(node("p", `Preservation guard: ${failure.reason}`));
+  $("download").disabled = !receipt;
+  $("receipt-json").textContent = receipt
+    ? watch.receipt_text ||
+      "Download the exact receipt JSON to inspect this observation."
+    : "No receipt yet.";
+  $("receipt-description").textContent = receipt
+    ? `Plan ${receipt.plan_sha256.slice(0, 12)}… · Read attempts: ${Object.values(receipt.observations).reduce((n, o) => n + o.trace.length, 0)} · ${receipt.mode}`
+    : "Each update stores its input, read attempts, checks, timestamps and plan hash.";
+  if (receipt && lastReceipt !== receipt.event_id + status) {
+    const el = document.querySelector(".decision");
+    el.classList.remove("receipt-updated");
+    void el.offsetWidth;
+    el.classList.add("receipt-updated");
+    lastReceipt = receipt.event_id + status;
+  }
+}
+async function refresh() {
+  if (!watch || polling) return;
+  polling = true;
+  const identity = watch.id;
+  try {
+    const [next, messages] = await Promise.all([
+      api(`/api/watches/${identity}?receipt_text=1`),
+      api(`/api/watches/${identity}/outbox?recent=1`),
+    ]);
+    if (watch.id !== identity) return;
+    watch = next;
+    render();
+    $("wake-count").textContent = messages.length;
+    const messageKey = JSON.stringify(messages.map((m) => [m.id, m.acked]));
+    if (messageKey === lastMessages) return;
+    lastMessages = messageKey;
+    const list = $("wakeups");
+    list.replaceChildren();
+    if (!messages.length)
+      list.append(node("li", "No decision changes yet.", "empty-wake"));
+    for (const message of messages.slice().reverse()) {
+      const li = node("li"),
+        status = message.receipt.result.status;
+      li.append(
+        node(
+          "strong",
+          message.receipt.result.stale
+            ? "Evidence expired"
+            : `${status[0].toUpperCase() + status.slice(1)}`,
+        ),
+      );
+      const time = node(
+        "time",
+        new Date(message.created * 1000).toLocaleTimeString(),
+      );
+      time.dateTime = new Date(message.created * 1000).toISOString();
+      li.append(
+        time,
+        node(
+          "p",
+          `Revision ${message.receipt.revision} · ${message.receipt.result.stale ? "Freshness window elapsed" : "Evidence decision changed"}`,
+          "wake-reason",
+        ),
+      );
+      const ack = node(
+        "button",
+        message.acked ? "Acknowledged" : "Acknowledge",
+      );
+      ack.disabled = !!message.acked;
+      ack.addEventListener("click", async () => {
+        try {
+          await api(`/api/watches/${identity}/ack`, { id: message.id });
+          await refresh();
+        } catch (error) {
+          fail(error);
+        }
+      });
+      li.append(ack);
+      list.append(li);
+    }
+  } catch (error) {
+    fail(error);
+  } finally {
+    polling = false;
+  }
+}
+async function update(stale = false) {
+  if (busy || !watch) return;
+  setBusy(true);
+  clearError();
+  try {
+    const live =
+      current.mode === "live public GET" ||
+      current.mode === "caller-supplied snapshot";
+    const delivered = await api(
+      `/api/watches/${watch.id}/${live ? "live" : "replay"}`,
+      live ? {} : { case: $("case").value, stale },
+    );
+    $("event-note").textContent = delivered.accepted
+      ? "Observation recorded. The decision receipt is saved."
+      : "Older observation ignored. Newer evidence remains in effect until it expires.";
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+  }
+}
+$("replay-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  update();
+});
+$("expire").addEventListener("click", () => update(true));
+$("new-watch").addEventListener("click", () => choose(current));
+$("snapshot-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (busy || !watch) return;
+  setBusy(true);
+  clearError();
+  try {
+    const snapshots = JSON.parse($("snapshot-json").value, (key, value) => {
+      if (
+        typeof value === "number" &&
+        (!Number.isFinite(value) ||
+          (Number.isInteger(value) && !Number.isSafeInteger(value)))
+      )
+        throw new Error(
+          "This number exceeds browser precision. Submit exact integers through the Python SDK.",
+        );
+      return value;
+    });
+    await api(`/api/watches/${watch.id}/events`, {
+      event_id: crypto.randomUUID(),
+      revision: watch.revision + 1,
+      snapshots,
+    });
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+  }
+});
+$("download").addEventListener("click", async () => {
+  if (!watch?.receipt) return;
+  try {
+    const response = await fetch(`/api/watches/${watch.id}/receipt`);
+    if (!response.ok)
+      throw new Error("Could not download the receipt. Try again.");
+    const url = URL.createObjectURL(await response.blob());
+    const link = node("a");
+    link.href = url;
+    link.download = `evidence-${watch.id}-r${watch.revision}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    fail(error);
+  }
+});
+$("compile-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearError();
+  const button = $("compile");
+  button.disabled = true;
+  try {
+    const context = JSON.parse($("context-json").value);
+    const job = await api("/api/compile", {
+      task: $("new-task").value,
+      provider: $("provider").value,
+      context,
+    });
+    $("job-status").textContent =
+      "Compiling from API docs… You can keep using the workbench.";
+    const phase = $("new-phase").value;
+    let jobReading = false;
+    jobPoll = setInterval(async () => {
+      if (jobReading) return;
+      jobReading = true;
+      try {
+        const value = await api(`/api/jobs/${job.id}`);
+        $("job-status").textContent =
+          value.status === "failed"
+            ? value.error
+            : `${value.status} · ${job.id}`;
+        if (value.status === "completed" || value.status === "failed") {
+          clearInterval(jobPoll);
+          button.disabled = false;
+          if (value.status === "completed") {
+            const template = {
+              task: value.task,
+              plan: value.plan,
+              name: "Your compiled task",
+              cases: [],
+              phase,
+              run: value.run,
+              job: job.id,
+              mode: "caller-supplied snapshot",
+            };
+            templates.push(template);
+            taskNav();
+            await choose(template);
+            $("workspace").scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      } catch (error) {
+        clearInterval(jobPoll);
+        button.disabled = false;
+        fail(error);
+      } finally {
+        jobReading = false;
+      }
+    }, 2000);
+  } catch (error) {
+    button.disabled = false;
+    fail(error);
+  }
+});
+async function start() {
+  try {
+    const boot = await api("/api/bootstrap");
+    token = boot.token;
+    templates = boot.templates;
+    $("evaluation-json").textContent = JSON.stringify(
+      { evaluation: boot.evaluation, supplementary_sources: boot.sources },
+      null,
+      2,
+    );
+    $("loading").hidden = true;
+    $("content").hidden = false;
+    const saved = new URLSearchParams(location.search).get("watch");
+    if (saved) {
+      watch = await api(`/api/watches/${encodeURIComponent(saved)}`);
+      const template = templates.find((t) => t.task.id === watch.task.id);
+      current = {
+        ...(template || { name: "Your saved task", cases: [] }),
+        task: watch.task,
+        plan: watch.plan,
+        phase: watch.phase,
+        run: watch.task._origin_run || "Saved plan",
+        mode: watch.task._mode || template?.mode || "caller-supplied snapshot",
+      };
+      taskNav();
+      renderPlan();
+      await refresh();
+    } else await choose(templates[0]);
+    setInterval(() => {
+      if (!busy) refresh();
+    }, 2000);
+    setInterval(() => {
+      if (watch?.receipt) render();
+    }, 1000);
+  } catch (error) {
+    $("loading").textContent = "Could not load the workbench. Reload to retry.";
+    fail(error);
+  }
+}
 start();
