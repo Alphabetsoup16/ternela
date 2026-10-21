@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-20",
+  "python": "3.15.0",
+  "scope": "offline frozen public status summary; three trials per workload; setup excluded; temporary SQLite/gzip stores",
+  "benchmarks": [
+    {
+      "watches": 10,
+      "extra_bytes": 0,
+      "before_median_ms": 44.659,
+      "after_median_ms": 49.627,
+      "before_evaluations": 20,
+      "after_evaluations": 10,
+      "incorrect_decisions": 0
+    },
+    {
+      "watches": 100,
+      "extra_bytes": 0,
+      "before_median_ms": 444.284,
+      "after_median_ms": 460.446,
+      "before_evaluations": 200,
+      "after_evaluations": 100,
+      "incorrect_decisions": 0
+    },
+    {
+      "watches": 10,
+      "extra_bytes": 65536,
+      "before_median_ms": 61.336,
+      "after_median_ms": 54.269,
+      "before_evaluations": 20,
+      "after_evaluations": 10,
+      "incorrect_decisions": 0
+    },
+    {
+      "watches": 100,
+      "extra_bytes": 65536,
+      "before_median_ms": 554.964,
+      "after_median_ms": 527.979,
+      "before_evaluations": 200,
+      "after_evaluations": 100,
+      "incorrect_decisions": 0
+    }
+  ],
+  "changes": [
+    "single-evaluation prepare/commit",
+    "watch and schedule repositories own SQL",
+    "stable runtime in ternela with legacy aliases",
+    "immutable typed handoffs and specific domain errors",
+    "ordered transactional database migrations and explicit record versions"
+  ],
+  "limitations": [
+    "in-process prepared observations are trusted contracts, not security capabilities",
+    "single-host anonymous connectors only",
+    "local latency is mixed; no universal speedup or capacity claim",
+    "at-least-once delivery still requires idempotent external actions"
+  ],
+  "tests": {
+    "macOS": 335,
+    "native_linux": 335,
+    "historical_receipts_macos": 10,
+    "frozen_semantic_cases": 41,
+    "false_ready_or_complete": 0
+  },
+  "deployment": {
+    "state_migration_passed": true,
+    "existing_watches_preserved": 12,
+    "consumer_checkpoints_preserved": 3,
+    "queued_messages_preserved": 8,
+    "restart_handoff_passed": true,
+    "folder_mount_locking_failed": true,
+    "native_live_storage_approval_pending": false,
+    "native_live_storage_migrated": true
+  },
+  "ancillary_fixes": [
+    "one bounded blob visibility retry; corrupt visible blobs still fail",
+    "clear inherited state/container/public-port variables in both launchers",
+    "supervisor exclusion test uses a competing process"
+  ],
+  "storage_follow_up": "2026-10-20-storage.json"
+}

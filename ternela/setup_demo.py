@@ -8,7 +8,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-from expansion_lab.storage import PROJECT, atomic_write, sha
+from ternela.storage import PROJECT, atomic_write, sha
 
 
 def download(url):

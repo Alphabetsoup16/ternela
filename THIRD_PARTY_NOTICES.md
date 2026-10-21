@@ -1,17 +1,19 @@
 # Third-party materials
 
 Ternela's original code is Apache-2.0. External API specifications and documentation
-retain their upstream terms. The setup command downloads public documentation into
-ignored local caches; those downloaded pages are not distributed in this repository.
+retain their upstream terms. The Git repository records the pinned manifest and notices. The application bundle
+includes verified API specifications and attributed supplemental documentation as
+source seeds so its replay works offline. Setup downloads missing seeds into local caches.
 
 | Source | Pinned revision | License |
 |---|---|---|
-| [Stripe OpenAPI](https://github.com/stripe/openapi) | `bcfd59f49dcac84a84d63d304c62793dff6e5916` | [MIT](LICENSES/stripe-MIT.txt) |
-| [GitHub REST API description](https://github.com/github/rest-api-description) | `bb754941722779d8a5b3a2f25a5fbb7ce794e1ea` | [MIT](LICENSES/github-MIT.txt) |
-| [Slack API specifications](https://github.com/slackapi/slack-api-specs) | `dfea73e06d146c368d7f94b52ac90796dc4e27e1` | [MIT](LICENSES/slack-MIT.txt) |
+| [Stripe OpenAPI](https://github.com/stripe/openapi) | `bcfd59f49dcac84a84d63d304c62793dff6e5916` | [MIT](docs/licenses/stripe-MIT.txt) |
+| [GitHub REST API description](https://github.com/github/rest-api-description) | `bb754941722779d8a5b3a2f25a5fbb7ce794e1ea` | [MIT](docs/licenses/github-MIT.txt) |
+| [Slack API specifications](https://github.com/slackapi/slack-api-specs) | `dfea73e06d146c368d7f94b52ac90796dc4e27e1` | [MIT](docs/licenses/slack-MIT.txt) |
 
 Source URLs and uncompressed SHA-256 hashes are recorded in
-[the source manifest](data/sources/manifest.json). Setup verifies those hashes.
+`data/sources/manifest.json` in the checkout and `seed/sources/manifest.json` in
+the application archive. Setup verifies those hashes.
 
 The compiler can also fetch pagination guidance from
 [GitHub](https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api),

@@ -4,8 +4,8 @@
 import json
 
 from expansion_lab import grade
-from expansion_lab.storage import PROJECT
-from source_lab.evidence import SourceIndex
+from ternela.sources import SourceIndex
+from ternela.storage import PROJECT
 
 from .validation import admit
 

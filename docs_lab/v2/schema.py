@@ -45,5 +45,7 @@ PLAN = deepcopy(OLD_PLAN)
 request = PLAN["properties"]["requests"]["items"]
 request["properties"]["pagination"] = PAGINATION
 request["required"].append("pagination")
-PLAN["properties"]["checks"]["items"]["properties"]["select_mode"]["enum"].append("count")
+PLAN["properties"]["checks"]["items"]["properties"]["select_mode"]["enum"].extend(
+    ["count", "single_or_unknown"]
+)
 BATCH = obj({"plans": {"type": "array", "items": PLAN}})

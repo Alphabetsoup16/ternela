@@ -1,34 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 """Propagate guard failures to readiness and validate preview/check phases."""
 
-from docs_lab.v2.runtime import evaluate, execute
-from expansion_lab.runtime import (
-    enforce_guard,
-    quantity_slots,
-)
-from expansion_lab.runtime import (
-    preservation_issues as original_issues,
-)
-
-
-def preservation_issues(plan):
-    issues = original_issues(plan)
-    checks = {c["id"]: c for c in plan["checks"]}
-    if len(checks) != len(plan["checks"]):
-        issues.append("Check IDs must be unique")
-    for requirement in plan["requirements"]:
-        for identity in requirement["check_ids"]:
-            if identity not in checks or checks[identity]["phase"] != requirement["phase"]:
-                issues.append(
-                    "Requirement check must exist in the same business phase: " + identity
-                )
-    for request, body, item, target in quantity_slots(plan):
-        relevant = [c for c in plan["checks"] if c["request_id"] == request["id"]]
-        if not relevant or any(c["phase"] != "before" for c in relevant):
-            issues.append(
-                "Existing-item price preview checks must gate BEFORE readiness, including budget and currency; no preview check may be deferred to AFTER"
-            )
-    return issues
+from ternela.evaluation import evaluate, execute
+from ternela.guards import base_preservation_issues as original_issues  # noqa: F401 — historical import
+from ternela.guards import enforce_guard, preservation_issues
+from ternela.guards import quantity_slots as quantity_slots
 
 
 def run_plan(plan, context, transport, phase="after"):

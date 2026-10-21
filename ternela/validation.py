@@ -3,19 +3,21 @@
 
 import json
 
-from docs_lab.audit import audit_check, audit_pagination, audit_request
-from expansion_lab.schema import PLAN
-from expansion_lab.storage import PROJECT, canonical, sha, strict_json
-from observation_lab.schema import validate_shape
-from safety_lab.runtime import preservation_issues
-from source_lab.evidence import SourceIndex
+from ternela.guards import preservation_issues
+from ternela.plan_audit import audit_check, audit_pagination, audit_request
+from ternela.plan_schema import PLAN
+from ternela.schema import validate_shape
+from ternela.storage import PROJECT, canonical, sha, strict_json
+
+from .connectors import SOURCE_FILES, source_index
+from .errors import AdmissionError
 
 
 def admit(plan, task, indexes=None):
     validate_shape(plan, PLAN)
     if plan["task_id"] != task["id"]:
         raise ValueError("Plan/task identity mismatch")
-    index = (indexes or {}).get(task["provider"]) or SourceIndex(task["provider"])
+    index = (indexes or {}).get(task["provider"]) or source_index(task["provider"])
     requests = {r["id"]: r for r in plan["requests"]}
     for request in plan["requests"]:
         bindings = strict_json(request["bindings_json"])
@@ -64,35 +66,45 @@ def admit(plan, task, indexes=None):
                 if expression.startswith("$response."):
                     issues.append("Checks support context bindings, not response expressions")
                 elif expression.startswith("$context."):
-                    from docs_lab.runtime import bind
+                    from ternela.expressions import bind
 
                     try:
                         bind(expression, task["context"])
                     except (KeyError, TypeError, IndexError, ValueError):
                         issues.append("Check references missing context")
     if issues:
-        raise ValueError("Plan admission failed: " + "; ".join(dict.fromkeys(issues)))
+        raise AdmissionError("Plan admission failed: " + "; ".join(dict.fromkeys(issues)))
     pins = json.loads((PROJECT / "data/sources/manifest.json").read_text())
     validation_files = [
-        "workbench/engine.py",
-        "ternela/validation.py",
-        "expansion_lab/storage.py",
-        "expansion_lab/source.py",
-        "docs_lab/audit.py",
-        "docs_lab/source.py",
-        "docs_lab/runtime.py",
-        "docs_lab/v2/runtime.py",
-        "expansion_lab/runtime.py",
-        "observation_lab/schema.py",
-        "docs_lab/schema.py",
-        "docs_lab/v2/schema.py",
-        "expansion_lab/schema.py",
-        "safety_lab/runtime.py",
-        "source_lab/evidence.py",
+        *SOURCE_FILES,
+        *[
+            "ternela/" + name + ".py"
+            for name in (
+                "watches",
+                "observations",
+                "repository",
+                "contracts",
+                "errors",
+                "database",
+                "migrations",
+                "evaluation",
+                "expressions",
+                "guards",
+                "schema",
+                "plan_schema",
+                "plan_audit",
+                "storage",
+                "specification",
+                "pinned_sources",
+                "sources",
+                "validation",
+            )
+        ],
     ]
     validator_code = {name: sha((PROJECT / name).read_bytes()) for name in validation_files}
     return {
-        "pinned_source": next(p for p in pins if p["provider"] == task["provider"]),
+        "pinned_source": getattr(index, "provenance", None)
+        or next(p for p in pins if p["provider"] == task["provider"]),
         "supplements": getattr(index, "supplements", []),
         "validator_sha256": sha(canonical(validator_code)),
         "validator_code": validator_code,

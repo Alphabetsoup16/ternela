@@ -9,6 +9,7 @@ __pycache__/
 *.tmp
 build/
 dist/
+/state/
 *.egg-info/
 data/**
 !data/sources/

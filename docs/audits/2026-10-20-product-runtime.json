@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-20",
+  "checks": {
+    "tests": {
+      "tests": 294,
+      "files": 24,
+      "success": true
+    },
+    "receipt_examples": 10,
+    "source_stable": true,
+    "boundary_issues": []
+  },
+  "sharing": [
+    {
+      "watches": 1,
+      "mode": "independent",
+      "network_reads": 1,
+      "shared_reads": 0,
+      "elapsed_ms": 6.226,
+      "incorrect_decisions": 0,
+      "accepted_observations": 1
+    },
+    {
+      "watches": 1,
+      "mode": "shared-batches",
+      "network_reads": 1,
+      "shared_reads": 0,
+      "elapsed_ms": 5.766,
+      "incorrect_decisions": 0,
+      "accepted_observations": 1
+    },
+    {
+      "watches": 10,
+      "mode": "independent",
+      "network_reads": 10,
+      "shared_reads": 0,
+      "elapsed_ms": 44.162,
+      "incorrect_decisions": 0,
+      "accepted_observations": 10
+    },
+    {
+      "watches": 10,
+      "mode": "shared-batches",
+      "network_reads": 1,
+      "shared_reads": 9,
+      "elapsed_ms": 44.227,
+      "incorrect_decisions": 0,
+      "accepted_observations": 10
+    },
+    {
+      "watches": 100,
+      "mode": "independent",
+      "network_reads": 100,
+      "shared_reads": 0,
+      "elapsed_ms": 442.982,
+      "incorrect_decisions": 0,
+      "accepted_observations": 100
+    },
+    {
+      "watches": 100,
+      "mode": "shared-batches",
+      "network_reads": 5,
+      "shared_reads": 95,
+      "elapsed_ms": 563.531,
+      "incorrect_decisions": 0,
+      "accepted_observations": 100
+    }
+  ],
+  "container": {
+    "container_health": {
+      "status": "ok",
+      "version": "0.1.0",
+      "mode": "single-host loopback service",
+      "python": "3.15.0",
+      "capabilities": {
+        "public_github_monitoring": true,
+        "public_package_monitoring": [
+          "pypi",
+          "npm"
+        ],
+        "public_recipes": [
+          "github_status",
+          "pypi",
+          "npm"
+        ],
+        "authenticated_connectors": false,
+        "verified_webhooks": false,
+        "task_compiler_available": false
+      },
+      "sources_present": true
+    },
+    "watch_id": "b8d896c1db7646ef87b4658153d65df1",
+    "message_id": 7,
+    "prior_watch_retained": true,
+    "independent_process_handoff": true,
+    "acked_consumer_stays_acked_after_restart": true,
+    "unacked_consumer_redelivered_after_restart": true,
+    "old_client_session_refresh": true,
+    "new_demo_monitor_paused": true,
+    "automatic_updates": false,
+    "usage": {
+      "observations": 1,
+      "read_attempts": 1,
+      "unknown_observations": 0,
+      "decision_changes": 1,
+      "expiry_events": 0,
+      "network_reads": 1,
+      "shared_reads": 0
+    }
+  },
+  "changed_existing_source_files": [
+    "ternela/connectors.py",
+    "ternela/providers/base.py",
+    "ternela/providers/release.py",
+    "ternela/providers/github_status.py",
+    "ternela/providers/pypi.py",
+    "ternela/providers/npm.py",
+    "workbench/client.py",
+    "workbench/engine.py",
+    "workbench/live.py",
+    "workbench/monitor.py",
+    "workbench/server.py",
+    "workbench/static/app.js",
+    "workbench/static/index.html",
+    "workbench/static/style.css"
+  ],
+  "limitations": [
+    "Single host, anonymous connectors only",
+    "At-least-once delivery; external actions require idempotency",
+    "Diagnostic acquisition counters can undercount if process exits before accounting write",
+    "No reduction in local evaluation time established",
+    "No production capacity or live network latency benchmark"
+  ]
+}

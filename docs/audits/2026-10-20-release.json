@@ -1,0 +1,49 @@
+{
+  "version": "0.1.1",
+  "date": "2026-10-20",
+  "phase": "pre-publication qualification",
+  "unit_api_tests": 355,
+  "historical_receipt_comparisons_macos": 10,
+  "simulated_regressions": {
+    "passed": 41,
+    "total": 41,
+    "false_ready_or_complete": 0,
+    "structural_issues": 0
+  },
+  "status_frozen_cases": {
+    "passed": 55,
+    "total": 55
+  },
+  "python_environments": [
+    "macOS ARM64 Python 3.15.0",
+    "Linux ARM64 Python 3.15.0",
+    "Linux ARM64 Python 3.11.17"
+  ],
+  "checks": [
+    "ruff check and format",
+    "offline setup and deterministic demo",
+    "fresh managed install with update opt-out",
+    "restart redelivery and durable acknowledgement",
+    "native-volume backup and restore",
+    "invalid restore preserves state",
+    "remove/start preserves data",
+    "successful synthetic upgrade",
+    "failed-start data rollback",
+    "interrupted upgrade recovery",
+    "failed bundled image fallback",
+    "uncertain commit recovery",
+    "deployed v0.1.0 launcher accepts v0.1.1 and preserves watch/ack/backup",
+    "third-party license files included"
+  ],
+  "fixed_findings": [
+    "Colima bind source must resolve macOS temporary-directory aliases",
+    "Python 3.11 streaming tar compression requires an explicit gzip wrapper",
+    "Application archive lacked upstream license texts; move canonical texts under docs/licenses"
+  ],
+  "limits": [
+    "Native Windows installation is unverified; experimental PowerShell path",
+    "Published GitHub update hop requires publication",
+    "Transport metadata is synthetic in local upgrade tests",
+    "No independent semantic accuracy, outage reliability or performance guarantee"
+  ]
+}

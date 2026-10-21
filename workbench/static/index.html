@@ -4,54 +4,116 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>__PRODUCT_NAME__ — Evidence workbench</title>
+    <title>__PRODUCT_NAME__ — Watches</title>
     <link rel="stylesheet" href="/style.css" />
     <script defer src="/app.js"></script>
   </head>
   <body>
-    <a class="skip" href="#workspace">Skip to workspace</a>
+    <a class="skip" href="#workspace">Skip to watch</a>
     <header class="topbar">
-      <a class="brand" href="/" aria-label="__PRODUCT_NAME__ home"
-        ><svg width="25" height="25" viewBox="0 0 25 25" aria-hidden="true">
+      <a class="brand" href="/" aria-label="__PRODUCT_NAME__ home">
+        <svg width="25" height="25" viewBox="0 0 25 25" aria-hidden="true">
           <path
             d="M3 6h19M3 12.5h13M3 19h7"
             fill="none"
             stroke="currentColor"
             stroke-width="2.5"
-          /></svg
-        >__PRODUCT_NAME__</a
-      ><span class="top-context">Evidence workbench</span
-      ><span class="local-label">Local prototype</span>
+          />
+        </svg>
+        __PRODUCT_NAME__
+      </a>
+      <span class="top-context">Watches</span>
+      <span class="local-label">Local alpha</span>
     </header>
     <div class="shell">
-      <aside class="task-rail" aria-label="Compiled tasks">
-        <h2>Tasks</h2>
-        <p class="rail-intro">
-          Real compiled plans.<br />Replayable observations.
-        </p>
-        <nav id="tasks" aria-label="Choose a task"></nav>
-        <a class="create-link" href="#compiler">Compile your own task</a>
+      <aside class="task-rail" aria-label="Watch navigation">
+        <button
+          id="show-create"
+          disabled
+          class="primary"
+          type="button"
+          aria-expanded="false"
+          aria-controls="create-watch"
+        >
+          New watch
+        </button>
+        <details class="saved-nav">
+          <summary>Saved watches</summary>
+          <label class="saved-picker"
+            >Open watch<select id="saved-watch">
+              <option value="">Loading saved watches…</option>
+            </select></label
+          >
+          <p id="directory-note" class="muted" role="status"></p>
+          <div class="directory-actions">
+            <button id="reload-watches" class="quiet" type="button">
+              Refresh list
+            </button>
+            <button id="more-watches" class="quiet" type="button" hidden>
+              Load more
+            </button>
+          </div>
+        </details>
+        <h2>Quick starts</h2>
+        <p class="rail-intro">Public APIs. No account needed.</p>
+        <select
+          id="mobile-task"
+          class="mobile-task"
+          aria-label="Choose a live check"
+        ></select>
+        <nav id="tasks" aria-label="Choose a live check"></nav>
+        <details class="demo-nav">
+          <summary>Simulated demos</summary>
+          <nav id="demo-tasks" aria-label="Choose a simulated demo"></nav>
+        </details>
+        <details class="custom-nav" id="custom-nav" hidden>
+          <summary>Compiled tasks</summary>
+          <nav id="custom-tasks" aria-label="Choose a compiled task"></nav>
+        </details>
         <div class="rail-note">
-          <strong>The agent’s wait operator.</strong>
-          <p>Maintain the evidence behind “can I proceed?” and “is it done?”</p>
-          <a href="#product">What we’re building</a>
+          A watch checks a condition and saves the evidence behind its result.
         </div>
       </aside>
       <main id="workspace" tabindex="-1">
         <div id="error" class="error" role="alert" hidden></div>
-        <div id="loading" class="empty">Loading compiled evidence plans…</div>
+        <section
+          id="create-watch"
+          class="create-section"
+          aria-labelledby="create-title"
+          hidden
+        >
+          <div class="section-heading">
+            <h2 id="create-title">What do you want to watch?</h2>
+            <button id="cancel-create" class="quiet" type="button">
+              Cancel
+            </button>
+          </div>
+          <p class="muted">
+            Start with a public API check. No keys or model setup required.
+          </p>
+          <form id="create-form">
+            <label>Check<select id="watch-kind"></select></label>
+            <div id="watch-fields" class="form-fields"></div>
+            <p id="create-hint" class="muted"></p>
+            <div class="form-actions">
+              <button id="create-submit" class="primary" type="submit">
+                Create and check</button
+              ><span id="create-status" role="status"></span>
+            </div>
+          </form>
+        </section>
+        <div id="loading" class="empty" role="status">Loading watches…</div>
         <div id="content" hidden>
           <div class="task-heading">
             <div>
               <h1 id="task-title"></h1>
               <p id="task-subtitle" class="muted"></p>
             </div>
-            <button id="new-watch" class="quiet">Start a new watch</button>
+            <button id="copy-link" class="quiet" type="button">
+              Copy watch link
+            </button>
           </div>
-          <details class="task-copy">
-            <summary>Read the original task</summary>
-            <p id="task-text"></p>
-          </details>
+          <p id="link-note" class="muted" role="status"></p>
           <section
             class="decision"
             aria-labelledby="decision-title"
@@ -70,208 +132,227 @@
               ></span>
               <div>
                 <div class="decision-heading">
-                  <h2 id="decision-title">Waiting for evidence</h2>
+                  <h2 id="decision-title">Not checked yet</h2>
                   <span id="decision-mode" class="decision-mode"
-                    >Simulated evidence</span
+                    >Live public API</span
                   >
                 </div>
                 <p id="decision-detail">
-                  Apply an observation to evaluate this task.
+                  Check the API to see the current result.
                 </p>
               </div>
             </div>
             <div class="freshness">
-              <span id="expiry">No observation yet</span
+              <span id="expiry">No check yet</span
               ><span id="revision">Revision 0</span>
             </div>
           </section>
-          <div class="work-grid">
-            <div class="primary-column">
-              <section class="plan-section">
-                <div class="section-heading">
-                  <h2>What the agent needs to observe</h2>
-                  <span id="phase" class="phase"></span>
-                </div>
-                <ol id="requests" class="requests"></ol>
-                <div id="guard-note" class="guard-note" hidden></div>
-                <details class="plan-detail">
-                  <summary>Inspect the compiled plan</summary>
-                  <pre id="plan-json"></pre>
-                </details>
-              </section>
-              <section class="controls-section">
-                <div class="section-heading">
-                  <h2 id="observation-heading">Replay an observation</h2>
-                  <span id="mode" class="mode"></span>
-                </div>
-                <p id="mode-explanation" class="muted"></p>
-                <form id="replay-form">
-                  <div class="replay-fields">
-                    <label id="case-label"
-                      >Provider response<select id="case"></select></label
-                    ><button id="apply" class="primary" type="submit">
-                      Apply update</button
-                    ><button id="expire" type="button" class="quiet">
-                      Replay an older update
-                    </button>
-                  </div>
-                </form>
-                <form id="snapshot-form" hidden>
-                  <label
-                    >Complete observation snapshot, keyed by request ID<textarea
-                      id="snapshot-json"
-                      rows="5"
-                      spellcheck="false"
-                    >
-{}</textarea></label
-                  ><button class="primary" type="submit">
-                    Submit snapshot
-                  </button>
-                </form>
-                <p id="event-note" class="event-note" role="status"></p>
-                <p class="control-footnote">
-                  Freshness window: <strong>30 seconds</strong>. Expiry triggers
-                  a new decision automatically.
-                </p>
-              </section>
-              <section class="checks-section">
-                <div class="section-heading">
-                  <h2>Evidence checks</h2>
-                  <span id="check-count" class="muted"></span>
-                </div>
-                <div class="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th scope="col">Evidence</th>
-                        <th scope="col">Expected</th>
-                        <th scope="col">Observed</th>
-                        <th scope="col">Result</th>
-                      </tr>
-                    </thead>
-                    <tbody id="checks"></tbody>
-                  </table>
-                </div>
-                <div id="gaps" class="gaps"></div>
-              </section>
-              <section class="receipt-section">
-                <div class="section-heading">
-                  <h2>Decision receipt</h2>
-                  <button id="download" class="quiet" disabled>
-                    Download JSON
-                  </button>
-                </div>
-                <p id="receipt-description" class="muted">
-                  Each update stores its input, read attempts, checks,
-                  timestamps and plan hash.
-                </p>
-                <details>
-                  <summary>Inspect the latest receipt</summary>
-                  <pre id="receipt-json">No receipt yet.</pre>
-                </details>
-              </section>
+          <section
+            class="controls-section"
+            aria-labelledby="observation-heading"
+          >
+            <div class="section-heading">
+              <h2 id="observation-heading">Check for an update</h2>
+              <span id="mode" class="mode"></span>
             </div>
-            <aside class="journal" aria-labelledby="journal-heading">
-              <div class="section-heading">
-                <h2 id="journal-heading">Recent wake-ups</h2>
-                <span id="wake-count" class="journal-count">0</span>
+            <p id="mode-explanation" class="muted"></p>
+            <form id="replay-form">
+              <div class="replay-fields">
+                <label id="case-label"
+                  >Example response<select id="case"></select></label
+                ><button id="apply" class="primary" type="submit">
+                  Check now</button
+                ><button id="expire" class="quiet" type="button">
+                  Test an older update
+                </button>
               </div>
-              <p class="muted">
-                Decision changes enter a durable queue. Acknowledge a wake-up
-                after your agent handles it.
-              </p>
-              <ol id="wakeups"></ol>
-              <div class="journal-footer">
-                Duplicates are ignored.<br />Older updates cannot replace newer
-                evidence.<br />Receipts survive a service restart.
-              </div>
-            </aside>
-          </div>
-          <section id="compiler" class="compiler-section">
-            <h2>Compile your own task</h2>
-            <p class="muted">
-              The compiler searches pinned API docs, expands missing evidence,
-              and audits the plan. This runs real model inference and may take
-              several minutes.
-            </p>
-            <form id="compile-form">
+            </form>
+            <form id="snapshot-form" hidden>
               <label
-                >What should the agent wait for?<textarea
-                  id="new-task"
-                  rows="3"
-                  required
-                >
-Monitor the latest published release of cli/cli. Complete only when draft and prerelease are false and published_at is present. Read metadata only; do not change anything.</textarea>
-              </label>
-              <div class="compile-options">
-                <label
-                  >Provider<select id="provider">
-                    <option value="github">GitHub</option>
-                    <option value="stripe">Stripe</option>
-                    <option value="slack">Slack</option>
-                  </select></label
-                ><label
-                  >Business phase<select id="new-phase">
-                    <option value="after">After — is it done?</option>
-                    <option value="before">Before — can I proceed?</option>
-                  </select></label
-                >
-              </div>
-              <label
-                >Context JSON<textarea
-                  id="context-json"
-                  rows="3"
+                >Response snapshots by request ID<textarea
+                  id="snapshot-json"
+                  rows="5"
                   spellcheck="false"
                 >
-{"owner":"cli","repo":"cli"}</textarea></label
-              ><button id="compile" class="primary" type="submit">
-                Compile evidence plan</button
-              ><span id="job-status" role="status"></span>
+{}</textarea
+                ></label
+              ><button class="primary" type="submit">Submit snapshot</button>
             </form>
-          </section>
-          <section id="product" class="product-section">
-            <h2>What are we selling?</h2>
-            <p>
-              An evidence service for agents. Give it a task, maintain the
-              observations that matter, and wake the agent when the decision
-              changes—with a receipt explaining why.
-            </p>
-            <div class="product-columns">
+            <p id="event-note" class="event-note" role="status"></p>
+            <div id="monitor-controls" class="monitor-controls" hidden>
               <div>
-                <h3>The first product</h3>
-                <p>
-                  A developer API for reliable waits on payments, releases and
-                  other external work. The task determines the observation plan;
-                  events update the decision.
-                </p>
+                <h3>Automatic checks</h3>
+                <p id="monitor-note" class="muted" role="status"></p>
               </div>
-              <div>
-                <h3>Working here</h3>
-                <p>
-                  Doc-grounded compilation, typed guards, complete pagination,
-                  persistent watches, evidence expiry and a durable queue.
-                  GitHub public reads are live when selected; the other examples
-                  are simulated.
-                </p>
-              </div>
-              <div>
-                <h3>Still to build</h3>
-                <p>
-                  Authenticated provider connectors, verified webhooks,
-                  scheduled reconciliation, tenant isolation and distributed
-                  delivery. Customer demand and pricing remain hypotheses.
-                </p>
-              </div>
+              <button id="monitor-toggle" class="quiet" type="button">
+                Start automatic checks
+              </button>
             </div>
+            <p class="control-footnote">
+              Evidence stays fresh for
+              <strong id="ttl-window">15 minutes</strong>. After that, the
+              result needs another check.
+            </p>
+          </section>
+          <section class="checks-section" aria-labelledby="checks-heading">
+            <div class="section-heading">
+              <h2 id="checks-heading">Why this result?</h2>
+              <span id="check-count" class="muted"></span>
+            </div>
+            <div
+              class="table-scroll"
+              tabindex="0"
+              role="region"
+              aria-label="Evidence checks"
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Condition</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Observed</th>
+                    <th scope="col">Result</th>
+                  </tr>
+                </thead>
+                <tbody id="checks"></tbody>
+              </table>
+            </div>
+            <div id="gaps" class="gaps"></div>
+          </section>
+          <details class="disclosure activity-section">
+            <summary>
+              Activity <span id="wake-count" class="count">0</span>
+            </summary>
+            <p class="muted">
+              Decision changes are saved for your agent. Mark a notification
+              handled after processing it.
+            </p>
+            <ol id="wakeups"></ol>
+          </details>
+          <details id="usage" class="disclosure">
+            <summary>Watch usage</summary>
+            <p id="usage-summary" role="status">Open to load usage.</p>
+            <p class="muted">
+              Counters start with this feature. Network reads count completed
+              local acquisition attempts; shared reads reuse an identical public
+              response within one polling batch. Unknown observations and
+              expirations need attention; they are not successful results.
+            </p>
+          </details>
+          <details class="disclosure technical-section">
+            <summary>Technical details</summary>
+            <section class="plan-section">
+              <div class="section-heading">
+                <h2>Observation plan</h2>
+                <span id="phase" class="mode"></span>
+              </div>
+              <details class="task-copy">
+                <summary>Original task</summary>
+                <p id="task-text"></p>
+              </details>
+              <ol id="requests" class="requests"></ol>
+              <div id="guard-note" class="guard-note" hidden></div>
+              <details class="plan-detail">
+                <summary>Plan JSON</summary>
+                <pre id="plan-json"></pre>
+              </details>
+            </section>
+            <section class="receipt-section">
+              <div class="section-heading">
+                <h2>Decision receipt</h2>
+                <button id="download" class="quiet" type="button" disabled>
+                  Download JSON
+                </button>
+              </div>
+              <p id="receipt-description" class="muted">
+                Each check saves its input, result and timestamps.
+              </p>
+              <details>
+                <summary>Receipt JSON</summary>
+                <pre id="receipt-json">No receipt yet.</pre>
+              </details>
+            </section>
+            <div class="reset-row">
+              <p class="muted">
+                Start over with the same task. The existing watch is retained.
+              </p>
+              <button id="new-watch" class="quiet" type="button">
+                Reset watch
+              </button>
+            </div>
+          </details>
+        </div>
+        <details id="compiler" class="disclosure compiler-section">
+          <summary>Advanced: compile a task from API docs</summary>
+          <p id="compiler-note" class="muted">
+            Uses model inference and may take several minutes. Public checks
+            above work without this.
+          </p>
+          <form id="compile-form">
+            <label
+              >What should the agent wait for?<textarea
+                id="new-task"
+                rows="3"
+                required
+              >
+Monitor the latest published release of cli/cli. Complete only when draft and prerelease are false and published_at is present. Read metadata only; do not change anything.</textarea
+              >
+            </label>
+            <div class="form-fields">
+              <label
+                >Provider<select id="provider">
+                  <option value="github">GitHub</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="slack">Slack</option>
+                </select></label
+              ><label
+                >When to check<select id="new-phase">
+                  <option value="after">After an action: is it done?</option>
+                  <option value="before">
+                    Before an action: can I proceed?
+                  </option>
+                </select></label
+              >
+            </div>
+            <label
+              >Context JSON<textarea
+                id="context-json"
+                rows="3"
+                spellcheck="false"
+              >
+{"owner":"cli","repo":"cli"}</textarea
+              >
+            </label>
+            <div class="form-actions">
+              <button id="compile" class="primary" type="submit">
+                Compile task</button
+              ><span id="job-status" role="status"></span>
+            </div>
+          </form>
+        </details>
+        <footer>
+          <details id="product">
+            <summary>About this local alpha</summary>
+            <p>
+              __PRODUCT_NAME__ checks external conditions, saves the evidence,
+              and queues decision changes for an agent. Public GitHub, GitHub
+              Status, PyPI and npm reads are available. Payment and workspace
+              demos use simulated responses.
+            </p>
+            <p>
+              Authenticated connectors and verified webhooks are not available
+              yet. A result is bounded by the evidence collected; it does not
+              guarantee real-world outcomes.
+            </p>
             <details>
-              <summary>Evaluation and source provenance</summary>
+              <summary>Evaluation and sources</summary>
               <pre id="evaluation-json"></pre>
             </details>
-          </section>
-        </div>
-        <footer>
-          __PRODUCT_NAME__ · Decisions are bounded by the evidence collected. A
-          receipt explains a result; it does not prove every real-world fact.
+          </details>
+          <p>
+            __PRODUCT_NAME__ · Runs locally. Automatic checks require the
+            service to stay running.
+          </p>
         </footer>
       </main>
     </div>

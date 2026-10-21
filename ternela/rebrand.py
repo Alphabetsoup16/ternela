@@ -5,7 +5,7 @@ import argparse
 import json
 import re
 
-from expansion_lab.storage import PROJECT, write_json
+from ternela.storage import PROJECT, write_json
 
 from .branding import BRAND, BRAND_PATH
 
@@ -17,6 +17,16 @@ DOCUMENTS = (
     "docs/architecture.md",
     "THIRD_PARTY_NOTICES.md",
     "docs/rebranding.md",
+    "docs/roadmap.md",
+    "docs/monitoring.md",
+    "docs/public-connectors.md",
+    "docs/status-readiness.md",
+    "docs/local-install.md",
+    "docs/releasing.md",
+    "docs/adding-connectors.md",
+    "docs/semantic-review.md",
+    "docs/api.md",
+    "docs/evaluation.md",
     "pyproject.toml",
 )
 

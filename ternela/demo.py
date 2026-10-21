@@ -4,9 +4,9 @@
 import tempfile
 from pathlib import Path
 
-from expansion_lab.storage import Store
+from ternela.storage import Store
+from ternela.watches import Watches
 from workbench.demo import catalog, snapshots
-from workbench.engine import Watches
 
 
 def main():

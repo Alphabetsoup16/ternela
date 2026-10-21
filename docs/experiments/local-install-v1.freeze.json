@@ -1,0 +1,8 @@
+{
+  "frozen_at": "2026-10-20T02:24:34.847696+00:00",
+  "implementation_exists": false,
+  "files": {
+    "docs/experiments/local-install-v1.md": "9157a4ef29857dbf63b4aa8df6b5c07da78546dfe18a9084b9d75a7d4bc3b251",
+    "tests/test_distribution.py": "98ee6c63dfba7adec7cb76124604497f9219b6d16195d4c5306c0c390e06f8e2"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-20",
+  "scope": "Ternela only; other agents own their Desktop cutovers",
+  "migration": {
+    "all_database_rows_equal": true,
+    "schema": 3,
+    "entries_verified": 318,
+    "file_hashes_verified": 250,
+    "counts": {
+      "consumers": 5,
+      "events": 8,
+      "monitor_limits": 2,
+      "monitors": 3,
+      "outbox": 14,
+      "schema_migrations": 3,
+      "sqlite_sequence": 1,
+      "watch_usage": 3,
+      "watches": 14
+    },
+    "settings": {
+      "automatic_updates": false
+    }
+  },
+  "tests": {
+    "macos": 355,
+    "colima_native_volume": 355,
+    "historical_receipts_macos": 10,
+    "frozen_semantic_cases": 41,
+    "false_ready_or_complete": 0,
+    "concurrent_startup_trials": 40,
+    "concurrent_startup_trials_macos": 40,
+    "concurrent_startup_trials_colima": 40
+  },
+  "source_python_files_match": 49,
+  "desktop_retained": true,
+  "default_context": "desktop-linux",
+  "context_pin": "colima",
+  "windows_validated": false,
+  "host_memory_savings_measured": false,
+  "backup_restore": {
+    "separate_colima_install": true,
+    "invalid_input_preserves_state": true,
+    "resume_after_failure": true,
+    "normal_remove_start": true,
+    "owned_probe_purge": true
+  }
+}

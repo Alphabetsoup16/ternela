@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "cases": 14,
+  "raw_sha256": "ea38c5a0dd9fb1c84191f3f1e9f9d96598db7446a1a2c271f37565088dd0d426",
+  "gzip_sha256": "019e5fde8b53c08cc0fa83dc571128fc2126324195b24b217d60eac8fe86c1b0",
+  "raw_bytes": 35059,
+  "gzip_bytes": 1838,
+  "labels": "Implementation-authored development labels; not an independent ground truth dataset."
+}

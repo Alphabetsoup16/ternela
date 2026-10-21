@@ -11,6 +11,68 @@ let token,
   jobPoll,
   lastMessages,
   lastRendered;
+// Small shared vocabulary; the UI uses native controls and one stylesheet.
+let providerNames = { stripe: "Stripe", slack: "Slack" },
+  watchKinds = {},
+  statusComponents = {},
+  directoryNext = null,
+  directoryItems = new Map(),
+  directoryDirty = true,
+  directoryReading = false;
+const statusNames = {
+  ready: "Ready to proceed",
+  complete: "Condition met",
+  blocked: "Not ready",
+  pending: "Waiting",
+  unknown: "No reliable result",
+  unverifiable: "Cannot verify",
+};
+const memoryKey = "ternela.watch-links.v1";
+function remembered() {
+  try {
+    const value = JSON.parse(localStorage.getItem(memoryKey) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+  } catch {
+    return {};
+  }
+}
+function remember() {
+  try {
+    const saved = remembered();
+    delete saved[current.task.id];
+    saved[current.task.id] = watch.id;
+    localStorage.setItem(
+      memoryKey,
+      JSON.stringify(Object.fromEntries(Object.entries(saved).slice(-40))),
+    );
+  } catch {
+    /* Watch URLs still work when browser storage is unavailable. */
+  }
+}
+function duration(seconds) {
+  return seconds % 60 === 0 ? `${seconds / 60} minutes` : `${seconds} seconds`;
+}
+function taskName(t) {
+  const context = t.task.context;
+  if (t.task.provider === "github_status")
+    return statusComponents[context.component_id] || "GitHub service status";
+  if (["pypi", "npm"].includes(t.task.provider))
+    return `${context.package} ${context.version}`;
+  return t.name;
+}
+function formattedValue(raw) {
+  if (raw === undefined) return "Unavailable";
+  try {
+    const value = JSON.parse(raw);
+    if (typeof value === "string") return value;
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+  } catch {
+    /* Keep the exact serialized value when it cannot be parsed. */
+  }
+  return raw;
+}
 const labels = {
   success: "Matching evidence",
   quantity_11: "Quantity is 11",
@@ -62,7 +124,7 @@ function fail(error) {
 function clearError() {
   $("error").hidden = true;
 }
-async function api(path, body) {
+async function api(path, body, refreshSession = true) {
   const response = await fetch(path, {
     method: body === undefined ? "GET" : "POST",
     headers:
@@ -72,48 +134,129 @@ async function api(path, body) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const value = await response.json();
-  if (!response.ok)
-    throw new Error(value.error || `Request failed (${response.status})`);
+  if (
+    response.status === 403 &&
+    body !== undefined &&
+    refreshSession &&
+    value.error === "Invalid local session"
+  ) {
+    token = (await api("/api/bootstrap")).token;
+    return api(path, body, false);
+  }
+  if (!response.ok) {
+    const error = new Error(
+      value.error || `Request failed (${response.status})`,
+    );
+    error.status = response.status;
+    throw error;
+  }
   return value;
 }
+function setText(id, text) {
+  if ($(id).textContent !== text) $(id).textContent = text;
+}
 function taskNav() {
-  const nav = $("tasks");
-  nav.replaceChildren();
+  const placeholder = node("option", "Choose a live check");
+  placeholder.value = "";
+  placeholder.disabled = true;
+  placeholder.selected = current?.mode !== "live public GET";
+  $("mobile-task").replaceChildren(placeholder);
+  for (const id of ["tasks", "demo-tasks", "custom-tasks"])
+    $(id).replaceChildren();
   for (const t of templates) {
-    const button = node("button", t.name);
+    const live = t.mode === "live public GET";
+    if (live) {
+      const option = node("option", taskName(t));
+      option.value = t.task.id;
+      option.selected = current?.task.id === t.task.id;
+      $("mobile-task").append(option);
+    }
+    const button = node("button", taskName(t));
     button.type = "button";
+    button.disabled = busy;
     button.setAttribute("aria-current", String(current?.task.id === t.task.id));
-    button.append(node("small", `${t.task.provider} · ${t.mode}`));
+    button.append(
+      node(
+        "small",
+        live
+          ? `${providerNames[t.task.provider] || t.task.provider} · live`
+          : t.mode === "simulated replay"
+            ? `${providerNames[t.task.provider] || t.task.provider} · simulated`
+            : "Captured responses",
+      ),
+    );
     button.addEventListener("click", () => choose(t));
-    nav.append(button);
+    $(
+      live
+        ? "tasks"
+        : t.mode === "simulated replay"
+          ? "demo-tasks"
+          : "custom-tasks",
+    ).append(button);
   }
+  $("custom-nav").hidden = !$("custom-tasks").children.length;
 }
 function setBusy(value) {
   busy = value;
-  for (const id of ["apply", "expire", "new-watch"]) $(id).disabled = value;
+  for (const id of ["apply", "expire", "new-watch", "monitor-toggle"])
+    $(id).disabled = value;
   document.querySelector("#snapshot-form button").disabled = value;
+  $("create-submit").disabled = value;
+  $("mobile-task").disabled = value;
+  $("saved-watch").disabled = value;
+  $("reload-watches").disabled = value;
+  $("more-watches").disabled = value;
+  for (const button of document.querySelectorAll(".task-rail nav button"))
+    button.disabled = value;
+  $("content").setAttribute("aria-busy", String(value));
   $("apply").textContent = value
-    ? "Observing…"
+    ? "Checking…"
     : current?.mode === "live public GET" ||
-        (current?.mode === "caller-supplied snapshot" &&
-          current?.task.provider === "github")
-      ? "Read GitHub now"
-      : "Apply update";
+        (current?.mode === "caller-supplied snapshot" && watch?.live_available)
+      ? "Check now"
+      : "Test response";
 }
-async function choose(template) {
+async function choose(template, reset = false) {
   if (busy) return;
   clearError();
   setBusy(true);
   try {
-    const next = await api(
+    let next;
+    const saved =
+      remembered()[template.task.id] ||
+      [...directoryItems.values()].find(
+        (item) =>
+          item.task_id === template.task.id && item.phase === template.phase,
+      )?.id;
+    if (!reset && typeof saved === "string" && /^[a-f0-9]{32}$/.test(saved)) {
+      try {
+        next = await api(`/api/watches/${saved}`);
+      } catch (error) {
+        if (error.status !== 404) throw error;
+      }
+      if (
+        next &&
+        (next.task.id !== template.task.id || next.phase !== template.phase)
+      )
+        next = null;
+    }
+    next ||= await api(
       "/api/watches",
-      template.job
-        ? { job_id: template.job, phase: template.phase }
-        : { template_id: template.task.id },
+      template.createBody ||
+        (template.job
+          ? {
+              job_id: template.job,
+              phase: template.phase,
+              ttl: template.task.provider === "github" ? 900 : 30,
+            }
+          : {
+              template_id: template.task.id,
+              ttl: template.mode === "live public GET" ? 900 : 30,
+            }),
     );
     current = template;
     watch = next;
-    history.replaceState(null, "", `/?watch=${watch.id}`);
+    activateWatch();
     lastReceipt = null;
     lastMessages = null;
     taskNav();
@@ -129,9 +272,10 @@ async function choose(template) {
 function renderPlan() {
   $("event-note").textContent = "";
   const plan = watch.active_plan || current.plan;
-  $("task-title").textContent = current.name;
+  $("task-title").textContent = taskName(current);
   $("task-subtitle").textContent =
-    `${current.task.provider} · ${current.run} · compiled from official API documentation`;
+    `${providerNames[current.task.provider] || current.task.provider} · ${current.mode === "live public GET" ? "Public API check. No account connected." : current.mode === "simulated replay" ? "Simulated demo. No provider is contacted." : "Compiled task. Supply captured API responses."}`;
+  $("link-note").textContent = "";
   $("task-text").textContent = current.task.task;
   $("phase").textContent =
     current.phase === "before" ? "Before the action" : "After the action";
@@ -163,36 +307,58 @@ function renderPlan() {
   const live = current.mode === "live public GET",
     custom = current.mode === "caller-supplied snapshot";
   $("mode").textContent = live
-    ? "LIVE PUBLIC API"
+    ? "Read only"
     : custom
-      ? "CALLER SNAPSHOT"
-      : "SIMULATED RESPONSES";
+      ? "Developer input"
+      : "Simulation";
   $("observation-heading").textContent = live
-    ? "Read a public API"
+    ? "Check for an update"
     : custom
-      ? "Supply an observation"
-      : "Replay an observation";
+      ? "Supply a response"
+      : "Try a simulated response";
   $("mode-explanation").textContent = live
-    ? "Fetch the public GitHub API now. Only repository GET requests are allowed; no account is connected."
+    ? "Read the public API now, or turn on checks every 5 minutes."
     : custom
-      ? "Submit captured responses for the request IDs in the plan. For a public GitHub task, you can also collect live evidence."
-      : "Change the fixture response below. The compiled plan and evaluation engine stay the same.";
+      ? "Use the request IDs in Technical details to submit captured responses. Supported public GitHub requests can also be checked live."
+      : "Choose an example response to see how the result changes. This does not read a real account.";
   $("case-label").hidden = live || custom;
   $("expire").hidden = live || custom;
-  $("replay-form").hidden = custom && current.task.provider !== "github";
+  $("replay-form").hidden = custom && !watch.live_available;
   $("snapshot-form").hidden = !custom;
-  $("apply").textContent = live || custom ? "Read GitHub now" : "Apply update";
+  $("apply").textContent = live || custom ? "Check now" : "Test response";
+  $("monitor-controls").hidden = !watch.live_available;
+  $("ttl-window").textContent = duration(watch.ttl);
+}
+function renderMonitor() {
+  const monitor = watch.monitor;
+  const enabled = monitor?.enabled && monitor.deadline > Date.now() / 1000;
+  $("monitor-toggle").textContent = enabled
+    ? "Pause automatic checks"
+    : "Start automatic checks";
+  $("monitor-toggle").setAttribute("aria-pressed", String(!!enabled));
+  setText(
+    "monitor-note",
+    enabled
+      ? `Every ${duration(monitor.interval)} until ${new Date(monitor.deadline * 1000).toLocaleString()}. Next eligible check: ${new Date(monitor.due * 1000).toLocaleTimeString()}.${monitor.last_error ? " Last attempt: " + monitor.last_error.replaceAll("_", " ") + "." : ""} Keep the local service running.`
+      : monitor
+        ? "Paused. Start again for another 24 hours."
+        : "Every 5 minutes for 24 hours. Off until you start it.",
+  );
 }
 function freshness() {
   const receipt = watch?.receipt;
-  $("expiry").textContent = receipt
-    ? receipt.result.stale || Date.now() / 1000 >= receipt.expires_at
-      ? "A fresh observation is needed"
-      : `Fresh for ${Math.max(0, Math.ceil(receipt.expires_at - Date.now() / 1000))}s`
-    : "No observation yet";
+  setText(
+    "expiry",
+    receipt
+      ? receipt.result.stale || Date.now() / 1000 >= receipt.expires_at
+        ? "Needs a fresh check"
+        : `Fresh until ${new Date(receipt.expires_at * 1000).toLocaleTimeString()}`
+      : "No check yet",
+  );
 }
 function render() {
   freshness();
+  renderMonitor();
   const receipt = watch.receipt,
     result = receipt?.result,
     expired =
@@ -205,54 +371,55 @@ function render() {
   $("decision-mode").textContent =
     evidenceMode === "simulated replay"
       ? "Simulated evidence"
-      : evidenceMode === "live public GitHub GET" ||
-          evidenceMode === "live public GET"
-        ? "Live GitHub read"
+      : evidenceMode.startsWith("live public ")
+        ? "Live public read"
         : "Caller snapshot";
   document.querySelector(".decision").dataset.status = status;
   $("decision-title").textContent = receipt
     ? expired
       ? "Evidence expired"
-      : status[0].toUpperCase() + status.slice(1)
-    : "Waiting for evidence";
+      : statusNames[status] || "Unknown result"
+    : "Not checked yet";
   $("decision-detail").textContent = receipt
-    ? descriptions[status]
-    : "Apply an observation to evaluate this task.";
-  $("revision").textContent = `Revision ${watch.revision}`;
-  $("expiry").textContent = receipt
     ? expired
-      ? "A fresh observation is needed"
-      : `Fresh for ${Math.max(0, Math.ceil(receipt.expires_at - Date.now() / 1000))}s`
-    : "No observation yet";
+      ? descriptions.unknown
+      : watch.explanation
+        ? `${watch.explanation.summary} ${watch.explanation.next_step}`
+        : descriptions[status]
+    : current.mode === "live public GET"
+      ? "Check now to read the current API state."
+      : "Submit a response to evaluate the conditions below.";
+  $("revision").textContent = `Revision ${watch.revision}`;
   const checks = current.plan.checks.filter((c) => c.phase === current.phase);
-  $("check-count").textContent = `${checks.length} checks`;
   const outcomes = Object.fromEntries(
     (expired ? [] : result?.checks || []).map((c) => [c.id, c.outcome]),
   );
+  $("check-count").textContent =
+    receipt && !expired
+      ? `${Object.values(outcomes).filter((v) => v === "true").length} of ${checks.length} met`
+      : `${checks.length} conditions`;
   const rows = checks.map((check) => {
     const row = node("tr"),
       field = node("td");
-    field.append(
-      node("span", check.reason),
-      node(
-        "code",
-        `${check.collection_pointer}${check.field_pointer}` || "Response",
-      ),
-    );
+    field.append(node("span", check.reason));
     const evidence = watch.check_evidence?.[check.id];
     const resultCell = node("td");
     resultCell.append(
       node(
         "span",
-        outcomes[check.id] ||
-          (expired ? "Expired" : receipt ? "Not evaluated" : "Waiting"),
+        { true: "Pass", false: "Not met", unknown: "Unknown" }[
+          outcomes[check.id]
+        ] || (expired ? "Expired" : receipt ? "Not evaluated" : "Not checked"),
         `outcome ${outcomes[check.id] || ""}`,
       ),
     );
     row.append(
       field,
-      node("td", `${check.op} ${evidence?.expected_json ?? "Unavailable"}`),
-      node("td", receipt ? (evidence?.actual_json ?? "Unavailable") : "—"),
+      node(
+        "td",
+        `${{ eq: "", gt: "> ", gte: "≥ ", lt: "< ", lte: "≤ " }[check.op] ?? check.op + " "}${formattedValue(evidence?.expected_json ?? check.value_json)}`,
+      ),
+      node("td", receipt ? formattedValue(evidence?.actual_json) : "—"),
       resultCell,
     );
     return row;
@@ -273,8 +440,8 @@ function render() {
       "Download the exact receipt JSON to inspect this observation."
     : "No receipt yet.";
   $("receipt-description").textContent = receipt
-    ? `Plan ${receipt.plan_sha256.slice(0, 12)}… · Read attempts: ${Object.values(receipt.observations).reduce((n, o) => n + o.trace.length, 0)} · ${receipt.mode}`
-    : "Each update stores its input, read attempts, checks, timestamps and plan hash.";
+    ? `Plan ${receipt.plan_sha256.slice(0, 12)}… · Read attempts: ${receipt.read_attempts ?? Object.values(receipt.observations || {}).reduce((n, o) => n + o.trace.length, 0)} · ${receipt.mode}`
+    : "Each check saves its input, result and timestamps.";
   if (receipt && lastReceipt !== receipt.event_id + status) {
     const el = document.querySelector(".decision");
     el.classList.remove("receipt-updated");
@@ -283,18 +450,48 @@ function render() {
     lastReceipt = receipt.event_id + status;
   }
 }
+async function loadReceipt() {
+  if (!watch?.receipt || watch.receipt_text) return;
+  const identity = watch.id,
+    event = watch.receipt.event_id,
+    evaluated = watch.receipt.evaluated_at;
+  const full = await api(`/api/watches/${identity}?receipt_text=1`);
+  if (
+    watch.id === identity &&
+    watch.receipt?.event_id === event &&
+    watch.receipt?.evaluated_at === evaluated &&
+    full.receipt?.event_id === event &&
+    full.receipt?.evaluated_at === evaluated
+  ) {
+    watch.receipt_text = full.receipt_text;
+    $("receipt-json").textContent = full.receipt_text;
+  }
+}
+$("receipt-json")
+  .closest("details")
+  .addEventListener("toggle", () => {
+    if ($("receipt-json").closest("details").open) loadReceipt().catch(fail);
+  });
 async function refresh() {
   if (!watch || polling) return;
   polling = true;
   const identity = watch.id;
   try {
     const [next, messages] = await Promise.all([
-      api(`/api/watches/${identity}?receipt_text=1`),
-      api(`/api/watches/${identity}/outbox?recent=1`),
+      api(`/api/watches/${identity}/status`),
+      api(`/api/watches/${identity}/outbox?recent=1&compact=1`),
     ]);
     if (watch.id !== identity) return;
-    watch = next;
+    if (
+      watch.receipt?.event_id !== next.receipt?.event_id ||
+      watch.receipt?.evaluated_at !== next.receipt?.evaluated_at
+    )
+      delete watch.receipt_text;
+    watch = { ...watch, ...next };
     render();
+    if (directoryDirty) await loadDirectory();
+    if ($("usage").open) await loadUsage();
+    if ($("receipt-json").closest("details").open) await loadReceipt();
     $("wake-count").textContent = messages.length;
     const messageKey = JSON.stringify(messages.map((m) => [m.id, m.acked]));
     if (messageKey === lastMessages) return;
@@ -311,7 +508,7 @@ async function refresh() {
           "strong",
           message.receipt.result.stale
             ? "Evidence expired"
-            : `${status[0].toUpperCase() + status.slice(1)}`,
+            : statusNames[status] || "Unknown result",
         ),
       );
       const time = node(
@@ -327,16 +524,19 @@ async function refresh() {
           "wake-reason",
         ),
       );
-      const ack = node(
-        "button",
-        message.acked ? "Acknowledged" : "Acknowledge",
-      );
+      const ack = node("button", message.acked ? "Handled" : "Mark handled");
       ack.disabled = !!message.acked;
+      ack.setAttribute(
+        "aria-label",
+        `${message.acked ? "Handled" : "Mark handled"}: ${new Date(message.created * 1000).toLocaleString()}, revision ${message.receipt.revision}`,
+      );
       ack.addEventListener("click", async () => {
+        ack.disabled = true;
         try {
           await api(`/api/watches/${identity}/ack`, { id: message.id });
           await refresh();
         } catch (error) {
+          ack.disabled = false;
           fail(error);
         }
       });
@@ -362,7 +562,7 @@ async function update(stale = false) {
       live ? {} : { case: $("case").value, stale },
     );
     $("event-note").textContent = delivered.accepted
-      ? "Observation recorded. The decision receipt is saved."
+      ? "Check saved. The result and evidence are below."
       : "Older observation ignored. Newer evidence remains in effect until it expires.";
     await refresh();
   } catch (error) {
@@ -376,7 +576,26 @@ $("replay-form").addEventListener("submit", (event) => {
   update();
 });
 $("expire").addEventListener("click", () => update(true));
-$("new-watch").addEventListener("click", () => choose(current));
+$("new-watch").addEventListener("click", () => choose(current, true));
+$("monitor-toggle").addEventListener("click", async () => {
+  if (busy || !watch) return;
+  const identity = watch.id;
+  setBusy(true);
+  clearError();
+  try {
+    const enabled =
+      watch.monitor?.enabled && watch.monitor.deadline > Date.now() / 1000;
+    await api(
+      `/api/watches/${identity}/${enabled ? "pause" : "monitor"}`,
+      enabled ? {} : { interval: 300, duration: 86400 },
+    );
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+  }
+});
 $("snapshot-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (busy || !watch) return;
@@ -480,11 +699,262 @@ $("compile-form").addEventListener("submit", async (event) => {
     fail(error);
   }
 });
+function activateWatch() {
+  directoryDirty = true;
+  $("usage-summary").textContent = "Loading this watch’s usage…";
+  if (current.run === "reviewed-recipe" && watchKinds[current.task.provider]) {
+    current.createBody = {
+      recipe: current.task.provider,
+      context: current.task.context,
+      ttl: watch.ttl,
+    };
+  }
+  if (!templates.some((t) => t.task.id === current.task.id))
+    templates.push(current);
+  lastMessages = null;
+  lastReceipt = null;
+  history.replaceState(null, "", `/?watch=${watch.id}`);
+  remember();
+  lastRendered = null;
+  if (current.mode === "simulated replay")
+    document.querySelector(".demo-nav").open = true;
+}
+function renderWatchFields() {
+  const kind = watchKinds[$("watch-kind").value];
+  $("watch-fields").replaceChildren(
+    ...kind.fields.map((field) => {
+      const label = node("label", field.label);
+      const input = node(field.options ? "select" : "input");
+      input.name = field.key;
+      input.required = true;
+      if (field.options) {
+        for (const [value, text] of Object.entries(field.options)) {
+          const option = node("option", text);
+          option.value = value;
+          input.append(option);
+        }
+      } else {
+        input.type = "text";
+        input.placeholder = field.placeholder;
+        input.maxLength = field.max_length || 214;
+        input.autocomplete = "off";
+        input.spellcheck = false;
+      }
+      label.append(input);
+      return label;
+    }),
+  );
+  $("create-hint").textContent = kind.hint;
+}
+function showCreate(open) {
+  $("create-watch").hidden = !open;
+  $("show-create").setAttribute("aria-expanded", String(open));
+  $("create-status").textContent = "";
+  if (open) {
+    $("create-watch").scrollIntoView({ block: "start" });
+    $("watch-kind").focus();
+  } else $("show-create").focus();
+}
+$("show-create").addEventListener("click", () =>
+  showCreate($("create-watch").hidden),
+);
+$("cancel-create").addEventListener("click", () => showCreate(false));
+$("watch-kind").addEventListener("change", renderWatchFields);
+$("mobile-task").addEventListener("change", () => {
+  const template = templates.find((t) => t.task.id === $("mobile-task").value);
+  if (template) choose(template);
+});
+$("copy-link").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(location.href);
+    $("link-note").textContent =
+      "Link copied. Save it to return to this watch.";
+  } catch {
+    $("link-note").textContent =
+      `Copy this address to return: ${location.href}`;
+  }
+});
+$("create-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (busy) return;
+  const provider = $("watch-kind").value;
+  const context = Object.fromEntries(
+    watchKinds[provider].fields.map((f) => [
+      f.key,
+      $("create-form").elements.namedItem(f.key).value.trim(),
+    ]),
+  );
+  setBusy(true);
+  clearError();
+  $("create-status").textContent = "Creating watch…";
+  try {
+    const body = { recipe: provider, context, ttl: 900 };
+    const next = await api("/api/watches", body);
+    watch = next;
+    current = {
+      task: next.task,
+      plan: next.plan,
+      phase: next.phase,
+      name: taskName({ task: next.task, name: "Your watch" }),
+      cases: [],
+      run: "reviewed-recipe",
+      mode: "live public GET",
+      createBody: body,
+    };
+    const existing = templates.findIndex((t) => t.task.id === current.task.id);
+    if (existing < 0) templates.push(current);
+    else templates[existing] = current;
+    activateWatch();
+    taskNav();
+    renderPlan();
+    render();
+    $("create-watch").hidden = true;
+    $("show-create").setAttribute("aria-expanded", "false");
+    $("workspace").focus();
+    $("apply").textContent = "Checking…";
+    try {
+      await api(`/api/watches/${watch.id}/live`, {});
+      $("event-note").textContent = "Watch created. The first check is saved.";
+    } catch (error) {
+      fail(
+        new Error(
+          `Watch created, but the first check failed: ${error.message}. Use Check now to retry.`,
+        ),
+      );
+    }
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+    $("create-status").textContent = "";
+  }
+});
+async function loadDirectory(more = false) {
+  if (directoryReading) return;
+  directoryReading = true;
+  $("directory-note").textContent = "Loading saved watches…";
+  $("more-watches").disabled = true;
+  try {
+    const page = await api(
+      `/api/watches?limit=30&after=${encodeURIComponent(more ? directoryNext || "" : "")}`,
+    );
+    if (!more) {
+      directoryItems.clear();
+      const placeholder = node("option", "Open a saved watch");
+      placeholder.value = "";
+      $("saved-watch").replaceChildren(placeholder);
+    }
+    for (const item of page.items) {
+      directoryItems.set(item.id, item);
+      const template = templates.find((t) => t.task.id === item.task_id);
+      const label = template
+        ? taskName(template)
+        : taskName({
+            task: { provider: item.provider, context: item.context },
+            name: item.name,
+          });
+      const option = node(
+        "option",
+        `${label.slice(0, 64)} · ${statusNames[item.status] || "Not checked"} · ${item.id.slice(0, 6)}`,
+      );
+      option.value = item.id;
+      $("saved-watch").append(option);
+    }
+    $("saved-watch").value = watch?.id || "";
+    directoryNext = page.next;
+    $("more-watches").hidden = !directoryNext;
+    $("directory-note").textContent =
+      page.items.length || more
+        ? "Saved by this service. Refresh to update the list."
+        : "No saved watches yet. Choose a quick start below.";
+    directoryDirty = false;
+  } catch (error) {
+    $("directory-note").textContent =
+      `Could not load saved watches: ${error.message}. Use Refresh list to retry.`;
+  } finally {
+    directoryReading = false;
+    $("more-watches").disabled = busy;
+  }
+}
+async function openSaved(identity) {
+  if (!identity || busy) return;
+  setBusy(true);
+  clearError();
+  try {
+    const next = await api(`/api/watches/${encodeURIComponent(identity)}`);
+    const template = templates.find((t) => t.task.id === next.task.id);
+    watch = next;
+    current = {
+      ...(template || { name: "Your saved task", cases: [] }),
+      task: next.task,
+      plan: next.plan,
+      phase: next.phase,
+      run: next.task._origin_run || "Saved plan",
+      mode: next.task._mode || template?.mode || "caller-supplied snapshot",
+    };
+    activateWatch();
+    taskNav();
+    renderPlan();
+    render();
+    await refresh();
+  } catch (error) {
+    fail(error);
+  } finally {
+    setBusy(false);
+  }
+}
+$("saved-watch").addEventListener("change", () =>
+  openSaved($("saved-watch").value),
+);
+$("reload-watches").addEventListener("click", () => loadDirectory());
+$("more-watches").addEventListener("click", () => loadDirectory(true));
+async function loadUsage() {
+  if (!watch) return;
+  const identity = watch.id;
+  const usage = await api(`/api/watches/${identity}/usage`);
+  if (watch.id !== identity) return;
+  const count = (key, label, plural = label + "s") =>
+    `${usage[key].toLocaleString()} ${usage[key] === 1 ? label : plural}`;
+  $("usage-summary").textContent = [
+    count("network_reads", "network read"),
+    count("shared_reads", "shared read"),
+    count("observations", "accepted observation"),
+    count("decision_changes", "decision change"),
+    count("unknown_observations", "unknown observation"),
+    count("expiry_events", "expiration"),
+  ].join(" · ");
+}
+$("usage").addEventListener("toggle", () => {
+  if ($("usage").open) loadUsage().catch(fail);
+});
+
 async function start() {
   try {
     const boot = await api("/api/bootstrap");
     token = boot.token;
     templates = boot.templates;
+    for (const connector of boot.connectors) {
+      providerNames[connector.provider] = connector.label;
+      if (connector.recipe) watchKinds[connector.provider] = connector.recipe;
+    }
+    statusComponents = watchKinds.github_status?.fields[0].options || {};
+    $("watch-kind").replaceChildren(
+      ...Object.entries(watchKinds).map(([provider, recipe]) => {
+        const option = node("option", recipe.label);
+        option.value = provider;
+        return option;
+      }),
+    );
+    renderWatchFields();
+    $("show-create").disabled = false;
+    await loadDirectory();
+    const health = await api("/api/health");
+    if (!health.capabilities.task_compiler_available) {
+      $("compiler-note").textContent =
+        "Compilation needs the Codex CLI and model access on this host. It is unavailable here. Use a public check above instead.";
+      for (const control of $("compile-form").elements) control.disabled = true;
+    }
     $("evaluation-json").textContent = JSON.stringify(
       { evaluation: boot.evaluation, supplementary_sources: boot.sources },
       null,
@@ -494,7 +964,20 @@ async function start() {
     $("content").hidden = false;
     const saved = new URLSearchParams(location.search).get("watch");
     if (saved) {
-      watch = await api(`/api/watches/${encodeURIComponent(saved)}`);
+      try {
+        watch = await api(`/api/watches/${encodeURIComponent(saved)}`);
+      } catch (error) {
+        if (error.status !== 404) throw error;
+        await choose(
+          templates.find((t) => t.task.provider === "github_status") ||
+            templates[0],
+        );
+        fail(
+          new Error(
+            "That watch was not found. A live quick start is open; choose a check or create a new watch.",
+          ),
+        );
+      }
       const template = templates.find((t) => t.task.id === watch.task.id);
       current = {
         ...(template || { name: "Your saved task", cases: [] }),
@@ -504,10 +987,17 @@ async function start() {
         run: watch.task._origin_run || "Saved plan",
         mode: watch.task._mode || template?.mode || "caller-supplied snapshot",
       };
+      activateWatch();
       taskNav();
       renderPlan();
+      render();
       await refresh();
-    } else await choose(templates[0]);
+    } else
+      await choose(
+        templates.find((t) => t.task.provider === "github_status") ||
+          templates.find((t) => t.mode === "live public GET") ||
+          templates[0],
+      );
     setInterval(() => {
       if (!busy) refresh();
     }, 2000);

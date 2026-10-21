@@ -5,17 +5,25 @@ This release runs from a source checkout and uses Python's standard library.
 
 ```sh
 python3 -m ternela.setup_demo
-python3 -m ternela.check
+python3 -m ternela.check --watch
+# Or one pass: python3 -m ternela.check --changed
+# Full validation: python3 -m ternela.check
 python3 -m ternela.regression
 ```
 
 Setup downloads pinned public specifications and separately attributed guidance.
 Tests then run without provider credentials, model inference or paid services.
+The [development loop](docs/development.md) selects affected tests and reuses bounded
+local receipt examples while you edit. It runs in the foreground and adds no
+approval workflow. Retain the full suite for releases or uncertain runtime changes.
 
 Keep the plan data-only. Add a meaningful regression case when a change affects
 identity matching, phase assignment, pagination completeness, preservation,
 freshness or event delivery. Keep missing evidence distinct from a known unmet
 condition. Do not make a failing result disappear by changing its expectation.
+
+See [adding a connector](docs/adding-connectors.md) for the provider interface,
+registration and shared contract fixtures.
 
 For connector proposals, open an issue with one concrete task, the provider's
 canonical read operation, event coverage, reconciliation behavior and a fixture

@@ -1,79 +1,125 @@
 # Architecture
 
-Ternela separates interpretation from evaluation. A model helps construct a
-data-only observation plan; ordinary code evaluates captured evidence against it.
+Ternela separates model-assisted interpretation, deterministic observation and
+transactional persistence. The stable runtime lives under `ternela/`; the local
+HTTP/UI workbench and historical experiments depend on that runtime.
 
 ```mermaid
 flowchart TD
-    T[Task + provider + context] --> R[Retrieve pinned API evidence]
-    R --> C[Compile data-only plan]
-    C --> A{Schema and contract admission}
-    A -->|public evidence gap| R
-    A -->|accepted| W[Persistent watch]
-    O[Caller snapshots or bounded public GitHub GETs] --> W
-    W --> E[Evaluate phase, dependencies and freshness]
-    E --> B[Hash-verified compressed receipt]
-    B --> Q[Transactional decision-change outbox]
-    Q --> G[Agent reads current decision and acknowledges]
-    X[Expiry sweep] --> E
+    T[Task and provider context] --> P[Compile or build data-only plan]
+    P --> A[Deterministic admission]
+    A --> W[Persistent watch]
+    W --> S[Immutable execution snapshot]
+    S --> O[Acquire and evaluate once]
+    I[Caller-supplied snapshots] --> E[Validate and evaluate once]
+    O --> R[Prepared observation]
+    E --> R
+    R --> C[Commit: recheck identity, revision, lease and freshness]
+    C --> B[Publish compressed content-addressed receipt]
+    B --> D[SQLite: receipt reference, deduplication, usage and outbox]
+    D --> G[Named consumer reads current state and acknowledges]
 ```
 
-## Planning
+## Ownership
 
-The compiler discovers operations in pinned specifications, reads relevant schema
-branches and expands retrieval on explicit evidence gaps. Its output is JSON data,
-not executable code. Compilation and watch creation share admission rules. A plan rejected at admission
-is retained as a failed run and is not offered as a completed task.
+| Module | Owns |
+| --- | --- |
+| `ternela.client` | Standard-library local HTTP SDK; `ternela.Client` is its public alias. |
+| `ternela.watches` | Admission, preparation and public watch projections. No SQL. |
+| `ternela.observations`, `evaluation`, `guards` | Phase/dependency execution, pagination, typed comparison and preservation. |
+| `ternela.acquisition`, `connectors`, `providers/` | Bounded public acquisition and reviewed provider interpretation. |
+| `ternela.monitor` | Polling, backoff and deadline policy. No SQL. |
+| `ternela.repository` | Watch/event persistence, receipt/outbox atomicity, directory, usage and consumer checkpoints. |
+| `ternela.schedules` | Persisted schedule configuration, exclusive claims and provider deferrals. |
+| `ternela.database`, `migrations` | Shared connection/transaction boundary and ordered SQLite upgrades. |
+| `ternela.contracts`, `errors` | Immutable internal handoffs, typed references/decisions/receipts and specific domain failures. |
+| `ternela.storage` | Canonical JSON, hash verification and atomically published gzip blobs. |
+| `ternela.schema`, `plan_schema`, `plan_audit`, `validation` | The current strict schema and admission contract. |
+| `ternela.specification`, `pinned_sources`, `sources` | Pinned API specifications and separately attributed documentation supplements. |
+| `workbench/` | Local HTTP service, interface, compiler process orchestration and bundled demonstrations. |
+| `*_lab/` | Historical evaluation/compiler variants and compatibility imports for moved primitives. |
 
-The current inference backend is a signed-in Codex CLI with
-tools, web and apps disabled. Private scenario expectations do not enter inference.
+The ordinary check command follows transitive imports from the SDK, watch service
+and monitor. Stable runtime code cannot depend on the workbench or experiment
+packages. Provider modules cannot import scheduling, persistence or direct network
+clients. These source rules support review; they do not sandbox trusted Python.
 
-The supplied context binds exact resource identifiers and thresholds. The
-compiler's proposed poll interval does not start a polling schedule.
+## Prepare and commit
 
-## Evaluation
+`Watches.snapshot(id)` captures the watch's task, plan, phase, TTL and content
+references without UI projections. Its JSON tree and reference mappings are
+immutable. The monitor reuses this snapshot through acquisition and preparation,
+avoiding a second database read. A snapshot is an input, not a reservation.
 
-Admission checks documented operations and fields, JSON expressions, requirement
-coverage, business phases and typed preservation guards. The evaluator executes
-only a phase's observations and their dependencies. Collections need explicit
-pagination completeness. Failed observations and type/identity guard failures
-produce unknown, rather than silently reusing an earlier success.
+`acquire(...)` executes dependencies, preservation guards and pagination, then
+evaluates once and returns an immutable `Acquisition`. It carries a hash binding the
+full plan, context and business phase, plus the observation time. `Watches.prepare`
+accepts it only for the same binding and time. Caller snapshots instead pass through
+the same evaluator during preparation. Frozen JSON is validated on entry; subsequent
+reads copy containers while reusing immutable scalar values. Encoding is deferred
+until bytes or a content hash are needed.
 
-The runtime's existing-item Stripe price-preview policy is explicit domain policy.
-It has not been automatically derived as a universal business rule. A preview's
-typed copy preserves an observed quantity without making concurrent provider
-changes atomic.
+`Watches.commit` accepts an in-process `PreparedObservation`, never serialized
+caller decision JSON. The HTTP event endpoint still accepts observation snapshots,
+not prepared conclusions. These Python objects are trusted internal contracts, not
+cryptographic capabilities or a sandbox against hostile code in the process.
 
-## Persistence
+Evaluation and network I/O happen outside SQLite's write transaction. Commit checks
+current plan/task hashes, phase, ordered revision/source time, and the monitor's
+lease token, enablement and deadline. It rechecks the lease after blob publication,
+and expiry during a slow write becomes unknown. Pause, changed configuration,
+replacement claims and newer observations therefore still fence stale work.
+`submit` remains the backwards-compatible prepare/commit convenience method.
 
-Watch metadata, deduplication keys and wake-up references live in SQLite. A receipt
-and its changed-decision outbox entry are committed in the same database
-transaction. Full payloads live in immutable SHA-256-addressed gzip blobs, flushed to disk and atomically published
-before that transaction refers to them. A crash can leave an unreferenced blob;
-it cannot make the database reference a receipt that has not been written.
+The separate commits of a caller/provider observation and a business action are
+not atomic. An agent must reread current status and make external actions idempotent.
 
-The expiry sweep uses an indexed deadline query. It invalidates evidence and
-persists an unknown decision after the watch's freshness window.
+## Persistence and versions
 
-## Code map
+Small state and references live in one SQLite database. Receipt data is flushed and
+atomically published as a SHA-256-addressed gzip blob before the database points to
+it. Receipt selection, event deduplication, accepted-observation counters and changed
+decision outbox insertion share one transaction. A crash can leave an unreferenced
+blob; retention/garbage collection remains separate work.
 
-| Package | Responsibility |
-|---|---|
-| `ternela/` | Public entry points, shared admission, branding, setup and checks |
-| `workbench/` | Local service, event-fed watches, SDK and interface |
-| `source_lab/` | Separately attributed documentation supplements |
-| `safety_lab/` | Phase and preservation validation |
-| `expansion_lab/` | Retrieval expansion, inference provenance and compressed storage |
-| `docs_lab/`, `observation_lab/` | Shared schema, pagination, audit and comparison primitives |
+Database upgrades run in ordered transactions with `PRAGMA user_version` and a
+`schema_migrations` history. Existing unversioned databases upgrade in place. Applied
+migration history is checked and never silently repaired; unsupported newer schemas
+are rejected before journal/table changes. A failed upgrade rolls back DDL and
+version changes. Add a new migration for future schema changes rather than editing
+an applied step.
 
-Package names ending in `_lab` preserve the experiment's implementation lineage.
-The `ternela` entry points are the public starting point. This release runs from
-a source checkout; no PyPI distribution has been published.
+New watch plan/receipt references declare `record_type` and `record_version: 1`.
+The underlying JSON and its content hash stay compatible with existing blob readers.
+Unversioned references are legacy v0; they are read without rewriting historical
+blobs. Unknown explicit kinds/versions are rejected before interpretation.
+`GET /api/health` exposes supported format versions. These format versions are
+separate from the application's release version and the historical experiment names.
 
-Authenticated provider scheduling, webhook verification, distributed delivery and
-multi-tenant authorization are future service layers. Current event ordering is
-a caller-managed revision sequence for one watch, not a cross-provider causal clock.
+Named consumers keep independent ordered checkpoints. Delivery is at least once;
+acknowledge after processing. Acquisition counters are diagnostic: collection occurs
+outside the receipt transaction, so a crash before its accounting write can undercount.
 
-Display branding is isolated from stable import and storage names. See
-[rebranding](rebranding.md). Source checkout or editable installation is supported;
-standalone wheel installation has not been validated.
+## Extension and compatibility
+
+A provider owns its reviewed origin, operation/parameter rules, deterministic
+normalization, evidence-view schema, limitations and optional recipe/descriptor.
+Scheduling, freshness, evaluation and delivery remain shared. The frontend builds
+recipe fields from descriptors rather than a duplicate catalog.
+
+`workbench.engine`, `client`, `live`, `monitor` and moved source/storage/evaluation
+modules remain aliases to their canonical implementation. Existing import identities
+and mock seams stay intact. The legacy `collect` tuple API is retained; production
+monitoring, refresh and updater paths use `acquire` to retain prepared observations.
+Historical research evaluators retain their intentional differences.
+
+Compilation still uses pinned documentation and a signed-in Codex CLI with tools,
+web and apps disabled. Private expectations never enter inference. The compiler's
+suggested interval does not automatically start monitoring. Stable SDK/runtime
+imports do not require model access, the workbench or experiment packages.
+
+This remains a single-host local product with reviewed anonymous connectors.
+Authenticated sharing needs authorization-scope isolation; multi-provider causality,
+distributed workers, webhook verification and multi-tenant authorization remain
+future designs. Source checkout and Docker are supported; standalone wheel
+installation and native Windows operation have not been validated by this pass.

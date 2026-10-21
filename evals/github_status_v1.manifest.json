@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "frozen_at_utc": "2026-10-20T01:44:52.440947+00:00",
+  "raw_sha256": "dc3e5f49050755c255d13929f28c19e2bfacf8d9744341cc801ff41f8c83be1c",
+  "gzip_sha256": "b98bdee7aad69bdb3d28cd51428f9e043a3a0b41437d37803a5ecf9546e7d37c",
+  "cases": 55,
+  "raw_bytes": 38544,
+  "gzip_bytes": 1773,
+  "adapter_existed_at_freeze": false,
+  "baseline_core": {
+    "ternela/providers/base.py": "38d3add06896cdcfb293793fb665eaefc6a57d917e153ea23f014fbc79255438",
+    "ternela/providers/release.py": "3d2ffa433890a686033e874c7f5d01324125ca1ab5fd2bb18dca652639b9a2bf",
+    "ternela/connectors.py": "adda829e35a294d6e0d8be029470febbde1acd0e1b21570e9726472e68af46f0",
+    "ternela/validation.py": "32e8f8b2001ce70a4d49be5940d8e1a256dfe53f9fff8aeffea5baaf9d24b35a",
+    "workbench/engine.py": "726f8d120399f62e367c8794d2ce1abfe62b803b72e496aa79184d23fd1b8e21",
+    "workbench/live.py": "2be6566811362243462c1735cb313e9dfd27ca506df1ac03c69138f62bb33d6e",
+    "workbench/monitor.py": "a76b3c31b60217b49b081349a918504acc76e012fb8bcf571870fad337062f98",
+    "docs_lab/v2/runtime.py": "0f6b0cce7ef8b4008f08afc6c719fc952a5d80dc7f38e183a9d655b9d7af1553",
+    "docs_lab/audit.py": "11715f1f6001df41276f6c04d89075e37d15cefaf2e2cefb2c19abb2fa81ceab",
+    "workbench/client.py": "f2eb60a2df9712f09594680f3d11aa6167440242d56a99797145b81ebc87e3d3",
+    "workbench/server.py": "b3fb54d02362e6d3594bbf43809becf0d52839c350fc6c8345d2f7d138051f75"
+  },
+  "official_docs": {
+    "url": "https://www.githubstatus.com/api",
+    "sha256": "b96ad1115e8f87bfaa1b75a4608077da77d9d19032c53de497084944154c1773"
+  },
+  "preimplementation_observation": {
+    "url": "https://www.githubstatus.com/api/v2/summary.json",
+    "sha256": "1fc32cedb232f2ae3e4fac91ca9ead1f86749772d8afa4f4ab67e9772baed032"
+  },
+  "workflow_requirements": [
+    "Create/monitor/refresh/status/wait/pause through existing watch and monitor machinery.",
+    "Readiness invalidates after outage or TTL; newer caller revisions beat older observations; crash/restart preserves receipts and acknowledgements.",
+    "No inference, account, provider mutation, arbitrary destination or fabricated pagination signals.",
+    "Record every core/runtime or public-interface edit needed; preserve frozen expected decisions."
+  ]
+}

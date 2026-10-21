@@ -1,0 +1,210 @@
+{
+  "scope": "Synthetic fixtures. Expected decisions are explicit test oracles, not inferred by an AI or copied from normalized output.",
+  "connectors": [
+    {
+      "provider": "pypi",
+      "context": {
+        "package": "contract-demo",
+        "version": "1.2.3"
+      },
+      "payload": {
+        "info": {
+          "name": "contract-demo",
+          "version": "1.2.3"
+        },
+        "urls": [
+          {
+            "filename": "demo.whl",
+            "yanked": false,
+            "digests": {
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      },
+      "mutations": [
+        {
+          "id": "wrong-name",
+          "path": [
+            "info",
+            "name"
+          ],
+          "value": "other",
+          "expected": "pending"
+        },
+        {
+          "id": "wrong-version",
+          "path": [
+            "info",
+            "version"
+          ],
+          "value": "2.0.0",
+          "expected": "pending"
+        },
+        {
+          "id": "empty-files",
+          "path": [
+            "urls"
+          ],
+          "value": [],
+          "expected": "pending"
+        },
+        {
+          "id": "yanked",
+          "path": [
+            "urls",
+            0,
+            "yanked"
+          ],
+          "value": true,
+          "expected": "pending"
+        },
+        {
+          "id": "string-yanked",
+          "path": [
+            "urls",
+            0,
+            "yanked"
+          ],
+          "value": "false",
+          "expected": "unknown"
+        },
+        {
+          "id": "missing-hash",
+          "path": [
+            "urls",
+            0,
+            "digests",
+            "sha256"
+          ],
+          "delete": true,
+          "expected": "unknown"
+        },
+        {
+          "id": "invalid-hash",
+          "path": [
+            "urls",
+            0,
+            "digests",
+            "sha256"
+          ],
+          "value": "hello",
+          "expected": "unknown"
+        },
+        {
+          "id": "empty-filename",
+          "path": [
+            "urls",
+            0,
+            "filename"
+          ],
+          "value": "",
+          "expected": "pending"
+        },
+        {
+          "id": "missing-version",
+          "path": [
+            "info",
+            "version"
+          ],
+          "delete": true,
+          "expected": "unknown"
+        }
+      ]
+    },
+    {
+      "provider": "npm",
+      "context": {
+        "package": "@contract/demo",
+        "version": "1.2.3"
+      },
+      "payload": {
+        "name": "@contract/demo",
+        "version": "1.2.3",
+        "dist": {
+          "integrity": "sha512-YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQ==",
+          "tarball": "https://registry.npmjs.org/demo.tgz"
+        }
+      },
+      "mutations": [
+        {
+          "id": "wrong-name",
+          "path": [
+            "name"
+          ],
+          "value": "other",
+          "expected": "pending"
+        },
+        {
+          "id": "wrong-version",
+          "path": [
+            "version"
+          ],
+          "value": "2.0.0",
+          "expected": "pending"
+        },
+        {
+          "id": "missing-dist",
+          "path": [
+            "dist"
+          ],
+          "delete": true,
+          "expected": "unknown"
+        },
+        {
+          "id": "empty-integrity",
+          "path": [
+            "dist",
+            "integrity"
+          ],
+          "value": "",
+          "expected": "pending"
+        },
+        {
+          "id": "wrong-integrity-type",
+          "path": [
+            "dist",
+            "integrity"
+          ],
+          "value": true,
+          "expected": "unknown"
+        },
+        {
+          "id": "invalid-integrity",
+          "path": [
+            "dist",
+            "integrity"
+          ],
+          "value": "sha512-bad",
+          "expected": "pending"
+        },
+        {
+          "id": "missing-tarball",
+          "path": [
+            "dist",
+            "tarball"
+          ],
+          "delete": true,
+          "expected": "unknown"
+        },
+        {
+          "id": "insecure-tarball",
+          "path": [
+            "dist",
+            "tarball"
+          ],
+          "value": "http://example.com/a",
+          "expected": "pending"
+        },
+        {
+          "id": "missing-version",
+          "path": [
+            "version"
+          ],
+          "delete": true,
+          "expected": "unknown"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-20",
+  "scope": "local macOS Docker native volume; not Windows or production certification",
+  "tests": {
+    "macos": 350,
+    "actual_native_volume": 350,
+    "historical_receipts": 10,
+    "semantic_passed": 41,
+    "semantic_total": 41,
+    "false_ready_or_complete": 0
+  },
+  "migration": {
+    "entries": 310,
+    "regular_file_hashes": 245,
+    "watches": 13,
+    "consumers": 4,
+    "outbox": 12,
+    "schema": 3,
+    "all_rows_matched": true
+  },
+  "locks": {
+    "flock": true,
+    "lockf": true,
+    "sqlite_writer": true,
+    "active_supervisor_blocks_backup": true
+  },
+  "recovery": {
+    "separate_install_restore": true,
+    "corrupt_input_preserves_state": true,
+    "acknowledgement_preserved": true,
+    "normal_remove_start": true,
+    "owned_probe_purge": true
+  },
+  "automatic_updates": false,
+  "windows_validated": false,
+  "remote_storage": false
+}

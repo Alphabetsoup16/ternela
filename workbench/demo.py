@@ -4,6 +4,7 @@
 import json
 
 from expansion_lab.storage import PROJECT, Store
+from ternela.connectors import recipe_plan, release_plan
 
 from .engine import phase_plan
 
@@ -46,6 +47,31 @@ CASES = {
 def catalog():
     store = Store()
     result = json.loads((PROJECT / "examples/catalog.json").read_text())
+    for provider, package, version in (("pypi", "httpx", "0.28.1"), ("npm", "lodash", "4.17.21")):
+        task, plan = release_plan(provider, package, version)
+        result.append(
+            dict(
+                task=task,
+                plan=plan,
+                name=f"Read {provider}: {package} {version}",
+                cases=[],
+                phase="after",
+                run="reviewed-recipe",
+                mode="live public GET",
+            )
+        )
+    task, plan, phase = recipe_plan("github_status", {"component_id": "br0l2tvcx85d"})
+    result.append(
+        dict(
+            task=task,
+            plan=plan,
+            name="Wait for GitHub Actions readiness",
+            cases=[],
+            phase=phase,
+            run="reviewed-recipe",
+            mode="live public GET",
+        )
+    )
     # Completed user compilations remain discoverable after service/page restarts.
     for path in sorted(
         (PROJECT / "data/runs").glob("task-*/manifest.json"),

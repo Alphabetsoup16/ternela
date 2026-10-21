@@ -1,0 +1,11 @@
+{
+  "recorded_at_utc": "2026-10-20T01:46:20.499305+00:00",
+  "adapter_existed": false,
+  "files": {
+    "evals/github_status_v1.json.gz": "b98bdee7aad69bdb3d28cd51428f9e043a3a0b41437d37803a5ecf9546e7d37c",
+    "evals/github_status_v1.manifest.json": "5aff955f0d4690c717940ba52ba6431fe59015ab5c1c727197e0772cd4d409d8",
+    "tests/test_github_status.py": "21f5b8550642e8509dba7aefc483a95a79a796a0d0d2f4bb680abcbdabc11739"
+  },
+  "initial_failure": "ConnectorRegistry.get rejects github_status; no connector has been implemented or registered.",
+  "red_log_sha256": "548ffe72e0558c06a1797a3534bd59b0317d3dbce4739be81b9d167f18caa4c8"
+}

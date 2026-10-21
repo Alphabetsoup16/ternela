@@ -1,0 +1,33 @@
+services:
+  ternela:
+    image: ternela-local:${TERNELA_INSTALL_ID:-dev}
+    build: .
+    init: true
+    user: "1000:1000"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:${TERNELA_PORT:-8765}:8765"
+    environment:
+      TERNELA_AUTO_UPDATE: "${TERNELA_AUTO_UPDATE:-false}"
+      TERNELA_PUBLIC_PORT: "${TERNELA_PORT:-8765}"
+    volumes:
+      - state:/state
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+
+volumes:
+  state:
+    name: ternela-${TERNELA_INSTALL_ID:-dev}-state
+    labels:
+      io.ternela.install: "${TERNELA_INSTALL_ID:-dev}"

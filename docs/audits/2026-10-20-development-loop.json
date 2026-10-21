@@ -1,0 +1,151 @@
+{
+  "added_authored_negative_examples": 1,
+  "historical_examples": 9,
+  "limits": {
+    "case_bytes": 262144,
+    "cases": 64,
+    "corpus_expanded_bytes": 4194304,
+    "event_rows_per_cycle": 256,
+    "per_provider": 12
+  },
+  "metrics": {
+    "boundary-fault": {
+      "cached_examples": 0,
+      "cli_elapsed_ms": 293.882,
+      "elapsed_ms": 225.332,
+      "reason": "full: added/deleted source, configuration, asset or fixture",
+      "receipt_examples": 9,
+      "success": false,
+      "tests": {
+        "files": 0,
+        "success": false,
+        "tests": 0
+      }
+    },
+    "full": {
+      "cached_examples": 0,
+      "cli_elapsed_ms": 6769.884,
+      "elapsed_ms": 6671.426,
+      "reason": "full: no successful baseline",
+      "receipt_examples": 9,
+      "success": true,
+      "tests": {
+        "files": 23,
+        "success": true,
+        "tests": 268
+      }
+    },
+    "narrow": {
+      "cached_examples": 0,
+      "cli_elapsed_ms": 795.035,
+      "elapsed_ms": 726.485,
+      "reason": "local import dependents",
+      "receipt_examples": 9,
+      "success": true,
+      "tests": {
+        "files": 2,
+        "success": true,
+        "tests": 11
+      }
+    },
+    "new-negative-evidence": {
+      "cached_examples": 0,
+      "cli_elapsed_ms": 837.959,
+      "elapsed_ms": 766.585,
+      "reason": "local import dependents",
+      "receipt_examples": 10,
+      "success": true,
+      "tests": {
+        "files": 2,
+        "success": true,
+        "tests": 11
+      }
+    },
+    "normalizer-fault": {
+      "cached_examples": 0,
+      "cli_elapsed_ms": 6022.46,
+      "elapsed_ms": 5951.397,
+      "reason": "local import dependents",
+      "receipt_examples": 10,
+      "success": false,
+      "tests": {
+        "files": 13,
+        "success": false,
+        "tests": 187
+      }
+    },
+    "repaired": {
+      "cached_examples": 10,
+      "cli_elapsed_ms": 94.518,
+      "elapsed_ms": 28.617,
+      "reason": "unchanged source",
+      "receipt_examples": 10,
+      "success": true,
+      "tests": {
+        "files": 0,
+        "success": true,
+        "tests": 0
+      }
+    },
+    "unchanged": {
+      "cached_examples": 9,
+      "cli_elapsed_ms": 97.087,
+      "elapsed_ms": 28.408,
+      "reason": "unchanged source",
+      "receipt_examples": 9,
+      "success": true,
+      "tests": {
+        "files": 0,
+        "success": true,
+        "tests": 0
+      }
+    },
+    "watch": {
+      "cycles": 2,
+      "polls": 3,
+      "replay": [
+        {
+          "cached": 10,
+          "failures": [],
+          "passed": 10,
+          "replayed": 0,
+          "total": 10
+        },
+        {
+          "cached": 0,
+          "failures": [],
+          "passed": 10,
+          "replayed": 10,
+          "total": 10
+        }
+      ],
+      "tests": [
+        {
+          "files": 0,
+          "success": true,
+          "tests": 0
+        },
+        {
+          "files": 2,
+          "success": true,
+          "tests": 11
+        }
+      ]
+    }
+  },
+  "scope": "Local Mac/Python 3.15; offline receipts and authored fixtures; single observations; no model or provider calls",
+  "source_sha256": {
+    "expansion_lab/storage.py": "fccdb4151113542ed9da734016aee4accad5ae20bd3b879e2df9275057e0bd08",
+    "ternela/check.py": "28b8cdd4439f69ce988cbc4a6923cc130a0332ebbbd61ce3453e3dd405df9ec8",
+    "ternela/connectors.py": "5f5239c590da6f3aefbbd400503e68a4f9468c0896303fa6aeafc3146a33937d",
+    "ternela/replay.py": "c36563b481a1f89e87f44cef582ca5718ffaf2ce1c8feede1a64df2a1893c5c3",
+    "tests/test_continuous_checks.py": "63b0a28369be23e11b7b2af40da61134fd6786fb5efef9a22d7e3b8ad3650022"
+  },
+  "tests": {
+    "general": 173,
+    "new": 27,
+    "safety": 9,
+    "total": 268,
+    "workbench": 86
+  }
+}

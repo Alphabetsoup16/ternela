@@ -8,10 +8,13 @@ python3 -m ternela.rebrand --name "New Name" --repository owner/new-repo --tagli
 ```
 
 The command updates the identity file, README, architecture, notice and repository
-links. Review the diff and restart the local service. The interface and startup
+links, including the current monitoring, semantic-review and roadmap documents. Review the diff and restart the local service. The interface and startup
 message read the central identity file. No domains or GitHub resources are renamed.
 
 The Python import `ternela`, CLI module names, session header, SQLite tables and
 receipt format stay stable. Marketing changes therefore require no data migration.
+The `~/ternela` folder, script names and `ternela-vVERSION.tar.gz` asset namespace
+also stay stable. Existing containers retain their bundled release repository;
+changing an installed updater's trusted publisher requires an explicit image rebuild.
 Renaming the technical package later is a separate compatibility change. Dated
 naming and audit records retain their historical names and findings.

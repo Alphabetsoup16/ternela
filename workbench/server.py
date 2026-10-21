@@ -2,8 +2,11 @@
 """Loopback-only product workbench. python3 -m workbench.server"""
 
 import argparse
+import gzip
 import json
+import os
 import secrets
+import shutil
 import subprocess
 import sys
 import threading
@@ -14,21 +17,84 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from expansion_lab.storage import PROJECT, Store, sha, strict_json, write_json
+from ternela import __version__
+from ternela.acquisition import ReadBatch
+from ternela.acquisition import acquire as collect
 from ternela.branding import BRAND, NAME
+from ternela.connectors import (
+    connector_descriptors,
+    live_mode,
+    recipe_plan,
+    recipe_providers,
+    release_plan,
+    release_providers,
+    supports,
+)
+from ternela.contracts import Acquisition
+from ternela.migrations import SCHEMA_VERSION
+from ternela.monitor import Monitors
+from ternela.storage import PROJECT, Store, sha, strict_json, write_json
+from ternela.watches import Watches
 
 from . import demo
-from .engine import Watches
-from .live import collect
 
 
 class Service:
     def __init__(self):
         self.store = Store()
         self.engine = Watches(PROJECT / "data/workbench/watches.sqlite3", self.store)
+        self.monitors = Monitors(self.engine)
         self.token = secrets.token_urlsafe(32)
         self.jobs = {}
         self.pool = ThreadPoolExecutor(max_workers=1)
+
+    def watch(self, identity):
+        watch = self.engine.get(identity)
+        watch["monitor"] = self.monitors.get(identity)
+        return watch
+
+    def recipe(self, provider, context, ttl=900):
+        task, plan, phase = recipe_plan(provider, context)
+        task.update(_origin_run="reviewed-recipe", _mode="live public GET")
+        return self.engine.create(task, plan, phase, ttl)
+
+    def job(self, identity):
+        if not isinstance(identity, str):
+            raise ValueError("Job ID must be a string")
+        if identity in self.jobs:
+            return self.jobs[identity]
+        if (
+            len(identity) != 37
+            or not identity.startswith("task-")
+            or any(char not in "0123456789abcdef" for char in identity[5:])
+        ):
+            raise KeyError("Job not found")
+        task_path = PROJECT / "data/tasks" / identity / "public.json"
+        if not task_path.exists():
+            raise KeyError("Job not found")
+        task = json.loads(task_path.read_text())["tasks"][0]
+        manifest_path = PROJECT / "data/runs" / identity / "manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text())
+            if (
+                manifest.get("status") == "completed"
+                and manifest.get("admission_status") == "accepted"
+            ):
+                plan = self.store.get(manifest["plans"])["plans"][0]
+                return dict(id=identity, status="completed", task=task, plan=plan, run=identity)
+            if manifest.get("status") == "failed" or manifest.get("admission_status") == "rejected":
+                return dict(
+                    id=identity,
+                    status="failed",
+                    task=task,
+                    error="Compilation failed; inspect its saved run before retrying.",
+                )
+        return dict(
+            id=identity,
+            status="interrupted",
+            task=task,
+            error="The service restarted before this job completed. Start a new compilation.",
+        )
 
     def compile(self, task):
         if task.get("provider") not in ["github", "stripe", "slack"]:
@@ -71,7 +137,7 @@ class Service:
                     (PROJECT / "data/runs" / identity / "manifest.json").read_text()
                 )
                 plan = self.store.get(manifest["plans"])["plans"][0]
-                from .engine import admit
+                from ternela.validation import admit
 
                 admit(plan, task)
                 job.update(status="completed", plan=plan, run=identity)
@@ -88,9 +154,31 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def encode_body(self, body):
+        accepted = {}
+        for item in self.headers.get("Accept-Encoding", "").lower().split(","):
+            parts = item.strip().split(";")
+            quality = 1.0
+            try:
+                for option in parts[1:]:
+                    key, _, value = option.strip().partition("=")
+                    if key == "q":
+                        quality = float(value)
+                accepted[parts[0]] = quality if 0 <= quality <= 1 else 0
+            except ValueError:
+                accepted[parts[0]] = 0
+        self.send_header("Vary", "Accept-Encoding")
+        if len(body) >= 1024 and accepted.get("gzip", accepted.get("*", 0)) > 0:
+            packed = gzip.compress(body, compresslevel=3, mtime=0)
+            if len(packed) < len(body):
+                self.send_header("Content-Encoding", "gzip")
+                return packed
+        return body
+
     def respond(self, value, status=200):
-        body = json.dumps(value, allow_nan=False).encode()
+        body = json.dumps(value, allow_nan=False, separators=(",", ":")).encode()
         self.send_response(status)
+        body = self.encode_body(body)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
@@ -103,6 +191,28 @@ class Handler(BaseHTTPRequestHandler):
             if not self.valid_host():
                 return self.respond({"error": "Invalid host"}, 403)
             path = urlsplit(self.path).path
+            if path == "/api/health":
+                return self.respond(
+                    {
+                        "status": "ok",
+                        "version": __version__,
+                        "mode": "single-host loopback service",
+                        "python": sys.version.split()[0],
+                        "formats": {"database": SCHEMA_VERSION, "plan": 1, "receipt": 1},
+                        "capabilities": {
+                            "public_github_monitoring": True,
+                            "public_package_monitoring": release_providers(),
+                            "public_recipes": recipe_providers(),
+                            "authenticated_connectors": False,
+                            "verified_webhooks": False,
+                            "task_compiler_available": shutil.which("codex") is not None,
+                        },
+                        "sources_present": all(
+                            (PROJECT / "data/sources" / (provider + ".json.gz")).is_file()
+                            for provider in ("github", "stripe", "slack")
+                        ),
+                    }
+                )
             if path in ["/", "/app.js", "/style.css"]:
                 file = (
                     Path(__file__).parent
@@ -115,6 +225,7 @@ class Handler(BaseHTTPRequestHandler):
                 if path == "/":
                     body = body.replace(b"__PRODUCT_NAME__", html.escape(NAME).encode())
                 self.send_response(200)
+                body = self.encode_body(body)
                 self.send_header(
                     "Content-Type",
                     {
@@ -144,6 +255,7 @@ class Handler(BaseHTTPRequestHandler):
                         "brand": BRAND,
                         "token": self.server.service.token,
                         "templates": demo.catalog(),
+                        "connectors": connector_descriptors(),
                         "evaluation": evaluation,
                         "sources": (
                             json.loads(supplements.read_text()) if supplements.exists() else []
@@ -151,11 +263,22 @@ class Handler(BaseHTTPRequestHandler):
                         "mode": "local prototype; simulated replay unless live public GET is selected",
                     }
                 )
+            if path == "/api/connectors":
+                return self.respond(connector_descriptors())
+            if path == "/api/watches":
+                query = parse_qs(urlsplit(self.path).query)
+                return self.respond(
+                    self.server.service.engine.directory(
+                        query.get("after", [""])[0], int(query.get("limit", [30])[0])
+                    )
+                )
+            if path == "/api/usage":
+                return self.respond(self.server.service.engine.usage())
             if path.startswith("/api/watches/"):
                 parts = path.split("/")
                 identity = parts[3]
                 if len(parts) == 4:
-                    watch = self.server.service.engine.get(identity)
+                    watch = self.server.service.watch(identity)
                     if parse_qs(urlsplit(self.path).query).get("receipt_text") == ["1"]:
                         watch["receipt_text"] = (
                             json.dumps(watch["receipt"], indent=2, allow_nan=False)
@@ -163,6 +286,19 @@ class Handler(BaseHTTPRequestHandler):
                             else None
                         )
                     return self.respond(watch)
+                if len(parts) == 5 and parts[4] == "status":
+                    watch = self.server.service.engine.status(identity)
+                    watch["monitor"] = self.server.service.monitors.get(identity)
+                    return self.respond(watch)
+                if len(parts) == 5 and parts[4] == "usage":
+                    return self.respond(self.server.service.engine.usage(identity))
+                if len(parts) == 5 and parts[4] == "deliveries":
+                    query = parse_qs(urlsplit(self.path).query)
+                    return self.respond(
+                        self.server.service.engine.deliveries(
+                            identity, query.get("consumer", [""])[0]
+                        )
+                    )
                 if len(parts) == 5 and parts[4] == "receipt":
                     receipt = self.server.service.engine.get(identity)["receipt"]
                     if receipt is None:
@@ -172,24 +308,32 @@ class Handler(BaseHTTPRequestHandler):
                     query = parse_qs(urlsplit(self.path).query)
                     return self.respond(
                         self.server.service.engine.outbox(
-                            identity, int(query.get("after", [0])[0]), query.get("recent") == ["1"]
+                            identity,
+                            int(query.get("after", [0])[0]),
+                            query.get("recent") == ["1"],
+                            compact=query.get("compact") == ["1"],
                         )
                     )
             if path.startswith("/api/jobs/"):
-                identity = path.rsplit("/", 1)[-1]
-                if identity not in self.server.service.jobs:
+                parts = path.split("/")
+                if len(parts) != 4:
                     raise KeyError("Job not found")
-                return self.respond(self.server.service.jobs[identity])
+                return self.respond(self.server.service.job(parts[3]))
             self.respond({"error": "Not found"}, 404)
         except KeyError as exc:
             self.respond({"error": str(exc)}, 404)
         except (ValueError, TypeError) as exc:
-            self.respond({"error": str(exc)}, 400)
+            self.respond(
+                {"error": str(exc), **({"code": exc.code} if hasattr(exc, "code") else {})}, 400
+            )
         except Exception:
             self.respond({"error": "Local service error; inspect terminal output"}, 500)
 
     def valid_host(self):
+        port = getattr(self.server, "public_port", self.server.server_port)
         return self.headers.get("Host") in [
+            f"127.0.0.1:{port}",
+            f"localhost:{port}",
             f"127.0.0.1:{self.server.server_port}",
             f"localhost:{self.server.server_port}",
         ]
@@ -201,8 +345,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond({"error": "Invalid local session"}, 403)
             origin = self.headers.get("Origin")
             if origin and origin not in [
-                f"http://127.0.0.1:{self.server.server_port}",
-                f"http://localhost:{self.server.server_port}",
+                f"http://127.0.0.1:{getattr(self.server, 'public_port', self.server.server_port)}",
+                f"http://localhost:{getattr(self.server, 'public_port', self.server.server_port)}",
             ]:
                 return self.respond({"error": "Cross-origin request denied"}, 403)
             length = int(self.headers.get("Content-Length", "0"))
@@ -219,6 +363,19 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/compile":
                 return self.respond(service.compile(body), 202)
             if path == "/api/watches":
+                if "recipe" in body:
+                    return self.respond(
+                        service.recipe(
+                            body["recipe"], body.get("context", {}), body.get("ttl", 900)
+                        ),
+                        201,
+                    )
+                if "package" in body:
+                    task, plan = release_plan(body["provider"], body["package"], body["version"])
+                    task.update(_origin_run="reviewed-recipe", _mode="live public GET")
+                    return self.respond(
+                        service.engine.create(task, plan, "after", body.get("ttl", 900)), 201
+                    )
                 if "template_id" in body:
                     template = next(
                         (t for t in demo.catalog() if t["task"]["id"] == body["template_id"]), None
@@ -234,8 +391,8 @@ class Handler(BaseHTTPRequestHandler):
                         ),
                         201,
                     )
-                job = service.jobs.get(body.get("job_id"))
-                if job is None or job["status"] != "completed":
+                job = service.job(body.get("job_id", ""))
+                if job["status"] != "completed":
                     raise ValueError("Compile and validate a plan first")
                 task = dict(job["task"], _origin_run=job["run"], _mode="caller-supplied snapshot")
                 return self.respond(
@@ -275,10 +432,23 @@ class Handler(BaseHTTPRequestHandler):
                         )
                     )
                 if action == "live":
-                    if watch["task"]["provider"] != "github":
-                        raise ValueError("Live demo supports public GitHub GETs only")
-                    snapshots, started = collect(
-                        watch["plan"], watch["task"]["context"], watch["phase"]
+                    provider = watch["task"]["provider"]
+                    if not supports(provider, watch["active_plan"]["requests"]):
+                        raise ValueError("No reviewed anonymous connector for these operations")
+                    batch = ReadBatch()
+                    acquired = collect(
+                        watch["plan"],
+                        watch["task"]["context"],
+                        watch["phase"],
+                        provider=provider,
+                        batch=batch,
+                    )
+                    if isinstance(acquired, Acquisition):
+                        snapshots, started = acquired, acquired.observed_at
+                    else:
+                        snapshots, started = acquired
+                    service.engine.record_acquisition(
+                        identity, batch.network_reads, batch.shared_reads
                     )
                     return self.respond(
                         service.engine.submit(
@@ -287,8 +457,20 @@ class Handler(BaseHTTPRequestHandler):
                             watch["revision"] + 1,
                             snapshots,
                             started,
-                            "live public GitHub GET",
+                            live_mode(provider),
                         )
+                    )
+                if action == "monitor":
+                    return self.respond(
+                        service.monitors.start(
+                            identity, body.get("interval", 300), body.get("duration", 86400)
+                        )
+                    )
+                if action == "pause":
+                    return self.respond(service.monitors.pause(identity))
+                if action == "delivery-ack":
+                    return self.respond(
+                        service.engine.acknowledge_delivery(identity, body["consumer"], body["id"])
                     )
                 if action == "ack":
                     service.engine.ack(identity, body["id"])
@@ -297,7 +479,9 @@ class Handler(BaseHTTPRequestHandler):
         except KeyError as exc:
             self.respond({"error": str(exc)}, 404)
         except (ValueError, TypeError, IndexError, RecursionError) as exc:
-            self.respond({"error": str(exc)}, 400)
+            self.respond(
+                {"error": str(exc), **({"code": exc.code} if hasattr(exc, "code") else {})}, 400
+            )
         except Exception as exc:
             print("Service error:", type(exc).__name__, str(exc), flush=True)
             self.respond({"error": "Local service error; inspect terminal output"}, 500)
@@ -306,8 +490,18 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--container",
+        action="store_true",
+        help="Bind the container interface; publish only to host loopback",
+    )
     args = parser.parse_args()
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    if args.container and os.environ.get("TERNELA_CONTAINER") != "1":
+        parser.error("--container is reserved for the supplied local container image")
+    server = ThreadingHTTPServer(("0.0.0.0" if args.container else "127.0.0.1", args.port), Handler)
+    server.public_port = (
+        int(os.environ.get("TERNELA_PUBLIC_PORT", args.port)) if args.container else args.port
+    )
     server.service = Service()
     stop = threading.Event()
 
@@ -319,6 +513,18 @@ def main():
                 print("Expiry sweep failed:", type(exc).__name__, flush=True)
 
     threading.Thread(target=sweeper, daemon=True).start()
+
+    def monitor():
+        while not stop.is_set():
+            try:
+                if server.service.monitors.run_batch()["watches"]:
+                    continue
+            except Exception as exc:
+                print("Monitor attempt failed:", type(exc).__name__, flush=True)
+            stop.wait(1)
+
+    worker = threading.Thread(target=monitor, daemon=True)
+    worker.start()
     print(f"{NAME}: http://127.0.0.1:{args.port}", flush=True)
     try:
         server.serve_forever()
@@ -327,6 +533,7 @@ def main():
     finally:
         stop.set()
         server.server_close()
+        worker.join(timeout=1)
         server.service.pool.shutdown(wait=False, cancel_futures=True)
 
 
