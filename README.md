@@ -36,9 +36,9 @@ cd ternela
 sh scripts/ternela.sh install
 ```
 
-The installer keeps
-Ternela's host files in one folder, ask whether to enable automatic stable-release
-updates (default **no**), use a local Docker volume for live data, and print the local workbench URL when healthy.
+The installer keeps host files in one folder and live data in a local Docker
+volume. It asks whether to enable automatic stable-release updates (default **no**)
+and prints the local workbench URL when healthy.
 
 ```sh
 sh ~/ternela/ternela.sh update          # check and install a newer release now
