@@ -23,8 +23,11 @@ or completion. Missing, inaccessible or expired evidence stays unknown.
 
 ## Try it
 
-**Local container install (recommended):** start Docker Desktop, Docker Engine
-with Compose, or Colima on macOS. Clone this repository, then run the installer.
+**Supported host: macOS.** Windows and Linux hosts are unsupported for this first
+alpha release. The Linux container is the application runtime.
+
+**Local container install (recommended):** start Docker Desktop or Colima on
+macOS. Clone this repository, then run the installer.
 No host Python or provider account needed.
 
 ```sh
@@ -33,13 +36,7 @@ cd ternela
 sh scripts/ternela.sh install
 ```
 
-On Windows PowerShell (experimental; native Windows is not yet validated):
-
-```powershell
-powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\ternela.ps1 install
-```
-
-Both installers keep
+The installer keeps
 Ternela's host files in one folder, ask whether to enable automatic stable-release
 updates (default **no**), use a local Docker volume for live data, and print the local workbench URL when healthy.
 
@@ -49,11 +46,11 @@ sh ~/ternela/ternela.sh updates on      # opt in; use off to disable
 sh ~/ternela/ternela.sh remove          # retain data; --purge deletes volume and folder
 ```
 
-[Install, Windows commands, update recovery and removal →](docs/local-install.md)
+[Install, update recovery and removal →](docs/local-install.md)
 
 **From Python source:**
 
-Requires **Python 3.11+**, **curl**, and macOS or Linux. No Python dependencies or
+Requires **Python 3.11+**, **curl**, and macOS. No Python dependencies or
 provider credentials are needed for the bundled replay.
 
 ```sh
@@ -139,7 +136,7 @@ work; a production connector service is still being built.
 | Persistent watches | Duplicate protection, evidence expiry, durable outbox and acknowledgements |
 | Live provider reads | GitHub repository GETs, GitHub Status readiness and exact PyPI/npm release metadata |
 | Automatic public checks | Persisted schedules, leased attempts, pause/resume, deadlines and backoff |
-| Local distribution | Docker, Mac/Windows management scripts, opt-in app updates and startup rollback |
+| Local distribution | macOS container install, opt-in app updates and startup rollback |
 | Stripe and Slack | Document-grounded plans and simulated replay |
 | Authenticated connectors and verified webhooks | Planned |
 | Distributed workers, callbacks and tenant isolation | Planned |

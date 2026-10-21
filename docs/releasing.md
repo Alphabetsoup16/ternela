@@ -23,7 +23,8 @@ trigger automatic execution. There is no publishing workflow or CI added here.
    SHA256SUMS**. Verify asset names, sizes and GitHub's SHA-256 metadata against
    local bytes; download the draft assets and compare their hashes. Confirm the tag
    resolves to the tested commit. Only then publish the draft as a stable release.
-   Windows installation remains experimental until a native Windows trial passes.
+   Only macOS hosts are supported for the first release. Linux containers remain
+   the runtime; Windows and Linux host support require separate qualification.
 5. Check from an opted-in disposable installation. Confirm the recorded release
    watch, installed version, surviving watches and retained backup. Until a real
    release is published, local/mocked upgrade tests do not establish this last hop.

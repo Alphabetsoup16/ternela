@@ -1,9 +1,10 @@
 # Run locally with portable backups
 
-Use [Docker Desktop](https://docs.docker.com/desktop/), or on macOS use
-[Colima](https://colima.run/docs/installation/) with the Docker runtime. Start your
-chosen engine before installing.
-Windows must use Linux containers. Linux can use Docker Engine with Compose v2.
+**Supported host: macOS.** Use [Docker Desktop](https://docs.docker.com/desktop/)
+or [Colima](https://colima.run/docs/installation/) with the Docker runtime. Start
+your chosen engine before installing. The application runs inside a Linux container.
+Windows and Linux hosts are unsupported for this first alpha release. PowerShell
+and Linux instructions below are retained as development reference.
 No host Python, provider account, administrator install or PATH change is needed.
 
 There is no prebuilt registry image yet; the installer builds locally from the
@@ -13,13 +14,13 @@ checkout or application release you supply.
 
 From a checkout or extracted application release:
 
-**macOS / Linux**
+**macOS**
 
 ```sh
 sh scripts/ternela.sh install
 ```
 
-**Windows PowerShell (experimental)**
+**Windows PowerShell (unsupported development reference)**
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\ternela.ps1 install
@@ -54,7 +55,7 @@ colima start --activate=false
 DOCKER_CONTEXT=colima sh scripts/ternela.sh install
 ```
 
-Colima is a macOS option; Docker Desktop remains the Windows install path.
+Only macOS is supported. The retained PowerShell path has not been validated on Windows.
 
 An extracted archive may carry Windows' download mark. Review and unblock the
 script if RemoteSigned rejects it; the command does not change machine-wide policy.
@@ -66,7 +67,7 @@ Windows). They find that folder themselves when run from there.
 After installation, the original checkout or extracted download can be removed;
 normal starts and application updates use the managed folder and local image.
 
-| Action | macOS / Linux | Windows PowerShell |
+| Action | macOS | PowerShell reference (unsupported) |
 |---|---|---|
 | Show version and consent | `sh ~/ternela/ternela.sh status` | `& "$HOME\ternela\ternela.ps1" status` |
 | Check and install now | `sh ~/ternela/ternela.sh update` | `& "$HOME\ternela\ternela.ps1" update` |
@@ -175,7 +176,7 @@ application bug. Keep your own backups for valuable data.
 ## Docker directly
 
 The scripts above are the supported cross-platform install path. For a source
-checkout on macOS/Linux, Compose can also run directly:
+checkout on macOS, Compose can also run directly:
 
 ```sh
 docker compose up --build --detach --wait
