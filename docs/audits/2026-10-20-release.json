@@ -45,5 +45,25 @@
     "Published GitHub update hop requires publication",
     "Transport metadata is synthetic in local upgrade tests",
     "No independent semantic accuracy, outage reliability or performance guarantee"
-  ]
+  ],
+  "publication": {
+    "url": "https://github.com/Alphabetsoup16/ternela/releases/tag/v0.1.1",
+    "supported_host": "macOS",
+    "published_at": "2026-10-21T03:52:44Z",
+    "release_commit": "b63573ac66fc88d4ee9a47f46d65dd2fd7609936",
+    "archive_sha256": "ef627f2a37842d749bcebf999dc7e81638ad56346521672c4a174a1dad1f743c",
+    "public_update_probe": {
+      "real_public_discovery_download_verify_apply": true,
+      "from": "0.1.0",
+      "to": "0.1.1",
+      "consent_gate": true,
+      "opt_in_preserved": true,
+      "watch_and_ack_preserved": true,
+      "backup_retained": true,
+      "same_version_no_update": true,
+      "old_session_refresh": true,
+      "update_watch_id": "a0c02256e6214705a73119290695cf41",
+      "update_receipt_sha256": "2720dce32bb9c57b1e23bc2ccfa67f8d2c410d4b583a21f5fb655fae82be95c4"
+    }
+  }
 }
