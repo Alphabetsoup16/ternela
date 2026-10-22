@@ -8,7 +8,9 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-from ternela.storage import PROJECT, atomic_write, sha
+from ternela.paths import DATA
+from ternela.paths import source as source_path
+from ternela.storage import atomic_write, sha
 
 
 def download(url):
@@ -36,7 +38,7 @@ def download(url):
 
 
 def source(pin):
-    path = PROJECT / "data/sources" / (pin["provider"] + ".json.gz")
+    path = source_path("sources/" + pin["provider"] + ".json.gz")
     if path.exists():
         raw = gzip.decompress(path.read_bytes())
         if sha(raw) != pin["sha256"]:
@@ -46,17 +48,17 @@ def source(pin):
     raw = download(pin["url"])
     if sha(raw) != pin["sha256"]:
         raise ValueError("Downloaded source hash mismatch: " + pin["provider"])
-    atomic_write(path, gzip.compress(raw, compresslevel=9, mtime=0))
+    atomic_write(DATA / "sources" / path.name, gzip.compress(raw, compresslevel=9, mtime=0))
     print("Prepared", pin["provider"], flush=True)
 
 
 def main():
-    pins = json.loads((PROJECT / "data/sources/manifest.json").read_text())
+    pins = json.loads(source_path("sources/manifest.json").read_text())
     with ThreadPoolExecutor(max_workers=3) as pool:
         list(pool.map(source, pins))
-    from source_lab.evidence import MANIFEST, SourceIndex, ingest
+    from ternela.sources import SourceIndex, ingest
 
-    if MANIFEST.exists():
+    if source_path("sources/supplements.json").exists():
         SourceIndex("slack")
         print("Verified supplemental evidence", flush=True)
     else:
@@ -69,7 +71,7 @@ def main():
             datetime.now(timezone.utc).isoformat(),
         )
         print("Prepared separately attributed Slack example evidence", flush=True)
-    from docs_lab.v2.guides import main as prepare_guides
+    from ternela.compiler.guides import main as prepare_guides
 
     prepare_guides()
     print("Verified compiler pagination guides", flush=True)

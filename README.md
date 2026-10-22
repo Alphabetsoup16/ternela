@@ -48,6 +48,10 @@ sh ~/ternela/ternela.sh remove          # retain data; --purge deletes volume an
 
 [Install, update recovery and removal →](docs/local-install.md)
 
+**Python package:** v0.1.3 includes an offline-capable wheel with the UI and agent
+demo, zero runtime Python dependencies, and a `ternela` command.
+[Install from GitHub or build from source →](docs/python-package.md)
+
 **From Python source:**
 
 Requires **Python 3.11+**, **curl**, and macOS. No Python dependencies or
@@ -102,7 +106,7 @@ For an unattended public wait, select the GitHub, GitHub Status, PyPI or npm exa
 A separate process writes the actual CSV; a durable completion launches the agent's
 continuation, which reads the file and produces a verified **$68.00** summary.
 
-**In the UI:** install or update to **v0.1.2**, open the printed workbench URL,
+**In the UI:** install or update to **v0.1.2 or later**, open the printed workbench URL,
 and click **Run agent demo** at the top. From source, run `python3 -m ternela`.
 Watch the agent stop, the export complete, and the continuation return. The timeline
 uses actual event timestamps; **Inspect the actual output** shows the CSV and verified
@@ -182,7 +186,7 @@ or make a later business action atomic with the observation.
 
 ## Evidence, not a headline benchmark
 
-The current implementation passes **385 unit/API tests** and **41/41 known regression
+The current implementation passes **411 unit/API tests** and **41/41 known regression
 scenarios**, with zero structural audit issues or false ready/complete outcomes in
 that regression set. Those scenarios use simulated responses and previously seen
 providers. They are not a blinded generalization or production reliability claim.
@@ -204,7 +208,7 @@ result; uncertain changes run the full suite. [How the loop stays small →](doc
 [Product plan](docs/roadmap.md) · [Add a connector](docs/adding-connectors.md) ·
 [Optional Jev review](docs/semantic-review.md) ·
 [Contributing](CONTRIBUTING.md) · [Rebranding](docs/rebranding.md) ·
-[Release notes](docs/releases/v0.1.2.md) ·
+[Release notes](docs/releases/v0.1.3.md) ·
 [Release audit](docs/audits/2026-10-19.md) ·
 [Monitoring audit](docs/audits/2026-10-19-monitoring.md) ·
 [Public connector audit](docs/audits/2026-10-19-public-connectors.md) ·

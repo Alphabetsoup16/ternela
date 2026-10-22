@@ -28,3 +28,8 @@ jobs:
           python -m ruff format --check .
       - name: Check interface JavaScript syntax
         run: node --check workbench/static/app.js
+      - name: Build and test Python distributions
+        run: |
+          python -m pip install 'build>=1.2'
+          python -m build
+          python scripts/test-wheel.py dist/ternela-$(python -c 'import ternela; print(ternela.__version__)')-py3-none-any.whl

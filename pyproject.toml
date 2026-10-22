@@ -1,30 +1,44 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ternela"
-version = "0.1.2"
+version = "0.1.3"
 description = "Reliable waits and inspectable evidence for agents"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "docs/licenses/*.txt"]
 authors = [{name = "Ternela contributors"}]
 dependencies = []
 classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Operating System :: POSIX"]
 
 [project.optional-dependencies]
-dev = ["ruff==0.17.1"]
+dev = ["ruff==0.17.1", "build>=1.2"]
+
+[project.scripts]
+ternela = "ternela.cli:main"
 
 [project.urls]
 Repository = "https://github.com/Alphabetsoup16/ternela"
 Issues = "https://github.com/Alphabetsoup16/ternela/issues"
 
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.cmdclass]
+build_py = "package_build.BuildPy"
+sdist = "package_build.Sdist"
+
 [tool.setuptools.packages.find]
-include = ["ternela*", "workbench*", "source_lab*", "expansion_lab*", "safety_lab*", "docs_lab*", "observation_lab*"]
+include = ["ternela*", "workbench*", "source_lab*", "expansion_lab*", "safety_lab*", "docs_lab*", "observation_lab*", "examples"]
+exclude = ["*.tests", "*.tests.*", "*.fresh", "*.fresh.*", "*.static", "*.static.*"]
 
 [tool.setuptools.package-data]
 ternela = ["brand.json"]
+workbench = ["static/*.html", "static/*.css", "static/*.js"]
+"ternela.compiler" = ["prompts/*.txt", "prompts/protocol.json"]
 
 [tool.ruff]
 line-length = 100

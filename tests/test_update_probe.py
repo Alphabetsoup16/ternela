@@ -30,7 +30,6 @@ class UpdateProbeTests(unittest.TestCase):
             ]
         }
         with (
-            patch.object(update_probe, "PROJECT", self.root),
             patch.object(update_probe, "Store", return_value=Store(self.root / "data")),
             patch.object(update_probe, "collect", return_value=(responses, time.time())),
         ):

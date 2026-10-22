@@ -61,3 +61,18 @@ folder; changing Docker contexts must not turn removal into a local-data deletio
 while its original container is still running. The PowerShell filesystem/control
 probe is `powershell -NoProfile -File scripts/test-powershell.ps1`; it mocks Docker
 and does not replace testing Docker Desktop on Windows.
+
+## Python distributions
+
+Build from the full reviewed checkout after `python -m ternela.setup_demo`:
+`python -m build`. This builds the wheel from the sdist and catches missing source
+inputs. Test the resulting wheel with `python scripts/test-wheel.py PATH.whl`.
+Include upstream licenses, UI/prompt assets and only the shared verified public source
+allowlist. The wheel and sdist are separate artifacts from `ternela-vVERSION.tar.gz`;
+never substitute them for the immutable Docker launcher's update bundle.
+The managed application archive is not a packaging/development checkout.
+
+Packaging support does not publish to PyPI. Assign the next release version and
+validate the exact final artifacts before uploading anywhere; local development
+builds may still carry the previous version number. Wheel upgrade/removal is explicit
+and retains the external data folder. [Install and validation contract](python-package.md).

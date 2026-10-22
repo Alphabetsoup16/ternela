@@ -5,11 +5,12 @@ import json
 from copy import deepcopy
 from html.parser import HTMLParser
 
+from .paths import DATA, source
 from .pinned_sources import SourceIndex as PinnedIndex
 from .specification import response_schema
-from .storage import PROJECT, Store, sha, write_json
+from .storage import Store, sha, write_json
 
-MANIFEST = PROJECT / "data/sources/supplements.json"
+MANIFEST = DATA / "sources/supplements.json"
 
 
 class Examples(HTMLParser):
@@ -87,6 +88,13 @@ def ingest(provider, operation, url, html, fetched_at):
     if len(candidates) != 1:
         raise ValueError("Ambiguous or absent success example; manual source review needed")
     store = Store()
+    manifest = source("sources/supplements.json")
+    if manifest.exists() and manifest.parent.parent != DATA:
+        bundled = Store(manifest.parent.parent)
+        for record in json.loads(manifest.read_text()):
+            for field in ("raw_document", "example", "schema"):
+                ref = record[field]
+                store.put(bundled.get(ref), ref["media_type"])
     document = store.put(html, "text/html")
     example = candidates[0]
     overlay = {
@@ -103,7 +111,7 @@ def ingest(provider, operation, url, html, fetched_at):
             json.dumps(response_schema(index.spec, entry["operation"]), sort_keys=True).encode()
         ),
     }
-    records = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else []
+    records = json.loads(manifest.read_text()) if manifest.exists() else []
     records = [r for r in records if (r["provider"], r["operation"]) != (provider, operation)] + [
         overlay
     ]
@@ -115,10 +123,11 @@ class SourceIndex(PinnedIndex):
     def __init__(self, provider):
         super().__init__(provider)
         self.supplements = []
-        if not MANIFEST.exists():
+        manifest = source("sources/supplements.json")
+        if not manifest.exists():
             return
-        store = Store()
-        for record in json.loads(MANIFEST.read_text()):
+        store = Store(manifest.parent.parent)
+        for record in json.loads(manifest.read_text()):
             if record["provider"] != provider:
                 continue
             entry = self.by_key[record["operation"]]

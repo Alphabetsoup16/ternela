@@ -4,17 +4,18 @@
 import gzip
 import json
 
+from .paths import source
 from .specification import Index, resolve, response_schema
-from .storage import PROJECT, sha
+from .storage import sha
 
 
 class SourceIndex(Index):
     def __init__(self, provider):
         if provider not in {"stripe", "github", "slack"}:
             raise ValueError("Unsupported documentation provider")
-        compressed = PROJECT / "data/sources" / (provider + ".json.gz")
+        compressed = source("sources/" + provider + ".json.gz")
         raw = gzip.decompress(compressed.read_bytes())
-        manifest_path = PROJECT / "data/sources/manifest.json"
+        manifest_path = source("sources/manifest.json")
         pin = next(s for s in json.loads(manifest_path.read_text()) if s["provider"] == provider)
         if sha(raw) != pin["sha256"]:
             raise ValueError("Pinned source hash mismatch")

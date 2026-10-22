@@ -33,14 +33,16 @@ flowchart TD
 | `ternela.schedules` | Persisted schedule configuration, exclusive claims and provider deferrals. |
 | `ternela.database`, `migrations` | Shared connection/transaction boundary and ordered SQLite upgrades. |
 | `ternela.contracts`, `errors` | Immutable internal handoffs, typed references/decisions/receipts and specific domain failures. |
+| `ternela.paths` | Installed assets and one writable data root; source overrides preserve verification. |
 | `ternela.storage` | Canonical JSON, hash verification and atomically published gzip blobs. |
 | `ternela.schema`, `plan_schema`, `plan_audit`, `validation` | The current strict schema and admission contract. |
 | `ternela.specification`, `pinned_sources`, `sources` | Pinned API specifications and separately attributed documentation supplements. |
+| `ternela.compiler/` | Saved-task compilation, bounded evidence expansion, inference provenance, guides and canonical prompts. Uses shared plan schemas and admission. |
 | `workbench/` | Local HTTP service, interface, compiler process orchestration and bundled demonstrations. |
-| `*_lab/` | Historical evaluation/compiler variants and compatibility imports for moved primitives. |
+| `*_lab/` | Historical evaluators/schemas/fixtures and compatibility imports for moved implementations. |
 
 The ordinary check command follows transitive imports from the SDK, watch service
-and monitor. Stable runtime code cannot depend on the workbench or experiment
+and monitor, plus the active compiler. Stable runtime/compiler code cannot depend on the workbench or experiment
 packages. Provider modules cannot import scheduling, persistence or direct network
 clients. These source rules support review; they do not sandbox trusted Python.
 
@@ -111,7 +113,23 @@ recipe fields from descriptors rather than a duplicate catalog.
 modules remain aliases to their canonical implementation. Existing import identities
 and mock seams stay intact. The legacy `collect` tuple API is retained; production
 monitoring, refresh and updater paths use `acquire` to retain prepared observations.
-Historical research evaluators retain their intentional differences.
+The active compiler lives entirely in `ternela.compiler`: `jobs` starts a saved
+local task, `run` orchestrates its stages, `evidence`/`retrieval`/`feedback` manage
+bounded public evidence, and `inference` records the CLI interaction. `guides` and
+`prompts/` hold its source inputs. Compiler plans use `ternela.plan_schema` and final
+admission uses `ternela.validation`; neither contract is reconstructed in a lab.
+
+`python -m ternela.compiler JOB_ID` is the product subprocess entry point. The old
+`workbench.compiler`, expansion runner/inference/evidence, hardened feedback, guides
+and retrieval imports alias the same module objects, preserving patches as well as
+import identities. Historical research evaluators and older schema versions retain
+their intentional differences. The source-only experiment runner's default regression
+fixture location remains supported; normal saved-task compilation supplies its own
+data directory and does not read historical fixtures.
+
+New code snapshots identify canonical `ternela/` code and prompts rather than
+unrelated interface/lab source. Previous manifests, blobs and lock files are retained;
+a changed code manifest fails an old explicit lock rather than rewriting it.
 
 Compilation still uses pinned documentation and a signed-in Codex CLI with tools,
 web and apps disabled. Private expectations never enter inference. The compiler's
@@ -121,5 +139,7 @@ imports do not require model access, the workbench or experiment packages.
 This remains a single-host local product with reviewed anonymous connectors.
 Authenticated sharing needs authorization-scope isolation; multi-provider causality,
 distributed workers, webhook verification and multi-tenant authorization remain
-future designs. Source checkout and Docker are supported; standalone wheel
-installation and native Windows operation have not been validated by this pass.
+future designs. Source checkout, the macOS Docker install and the locally built Python wheel are
+validated paths. The wheel includes the UI, canonical compiler and legacy import adapters;
+core imports still do not depend on them. Native Windows operation remains unsupported.
+See [Python package installation and its validation limits](python-package.md).

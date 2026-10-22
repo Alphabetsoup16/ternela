@@ -1,8 +1,8 @@
 # Third-party materials
 
 Ternela's original code is Apache-2.0. External API specifications and documentation
-retain their upstream terms. The Git repository records the pinned manifest and notices. The application bundle
-includes verified API specifications and attributed supplemental documentation as
+retain their upstream terms. The Git repository records the pinned manifest and notices. The application bundle and Python distributions
+include verified API specifications and attributed supplemental documentation as
 source seeds so its replay works offline. Setup downloads missing seeds into local caches.
 
 | Source | Pinned revision | License |
@@ -13,7 +13,9 @@ source seeds so its replay works offline. Setup downloads missing seeds into loc
 
 Source URLs and uncompressed SHA-256 hashes are recorded in
 `data/sources/manifest.json` in the checkout and `seed/sources/manifest.json` in
-the application archive. Setup verifies those hashes.
+the application archive. The wheel stores the same seed under
+`ternela/_resources/data/`; the source distribution uses `data/`. Setup verifies
+those hashes.
 
 The compiler can also fetch pagination guidance from
 [GitHub](https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api),

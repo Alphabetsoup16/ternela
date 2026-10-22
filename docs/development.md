@@ -130,7 +130,7 @@ not observed recently. A small implementation with wrong outcomes has not improv
 
 Stable client, acquisition, evaluation, watch, storage and scheduling code lives in
 `ternela/`. Interface and experiment modules depend on it; compatibility files alias
-the implementation rather than copying it. The existing check follows core imports
+the implementation rather than copying it. The existing check follows core and active compiler imports
 transitively to reject dependencies back into `workbench` or `*_lab`. Provider
 ownership checks also reject imports of the new runtime scheduling/persistence modules.
 
@@ -144,3 +144,29 @@ Add a new ordered database migration for a schema change, and a new explicit rec
 version for an incompatible stored plan/receipt change. Test old data, failed upgrades,
 unknown future versions and restart recovery. Historical blobs and semantic fixtures
 remain unchanged by an implementation refactor.
+
+## Test the installed artifact
+
+After preparing pinned inputs, `python -m build` produces a source distribution and
+builds its wheel from that archive. Run `python scripts/test-wheel.py PATH.whl` to
+exercise an offline installation outside the checkout. It creates and removes only
+its temporary environment, state folder and foreground server. Build assets are
+staged from canonical inputs; they are not a second maintained source copy.
+See [Python packaging](python-package.md). Build hooks and manifest changes are
+fingerprinted by the ordinary checker and conservatively select the full suite.
+
+## Exercise the compiler without a model
+
+`python -m scripts.compiler_support` uses the real saved-task compiler and a local
+CLI stand-in. It runs discovery, targeted expansion, planning and shared admission,
+retaining ordinary compressed manifests and evidence in a temporary directory. It
+makes no provider/model requests and removes its own generated files on exit.
+The installed-wheel probe runs this same check outside the checkout, alongside the
+real reference-agent handoff.
+
+`tests/test_compiler.py` exercises legacy command/import identity, service job
+launch/recovery, stage reuse, operational retry/timeout limits, completed invalid
+answers, tool-attempt rejection, private-expectation exclusion, changed fixtures,
+repair and the bounded directory fallback. Source boundary checks include the
+compiler's transitive imports. Keep historical evaluators and fixtures distinct;
+they must not become dependencies of production compilation again.

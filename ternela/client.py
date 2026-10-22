@@ -30,7 +30,7 @@ class ObservationClient:
         origin.port  # Validate the port before any request.
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
         self.base = base_url.rstrip("/")
-        self.token = self._request("/api/bootstrap")["token"]
+        self.token = self._request("/api/bootstrap?session=1")["token"]
 
     def _request(self, path, body=None, timeout=90, _refresh_session=True):
         from ternela.transport import decode_body
@@ -72,7 +72,7 @@ class ObservationClient:
                     raise TimeoutError(
                         "Local session refresh exceeded the request timeout"
                     ) from None
-                self.token = self._request("/api/bootstrap", timeout=remaining)["token"]
+                self.token = self._request("/api/bootstrap?session=1", timeout=remaining)["token"]
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError(

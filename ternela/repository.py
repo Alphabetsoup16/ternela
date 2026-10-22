@@ -43,6 +43,7 @@ class WatchRepository:
 
     def load(self, identity):
         with self.connect() as db:
+            self._expire(db, identity)
             row = dict(self._row(db, identity))
         task = self.store.get(json.loads(row["task_ref"]))
         plan = read_record(self.store, json.loads(row["plan_ref"]), "plan")
@@ -189,26 +190,29 @@ class WatchRepository:
 
     def expire(self, identity=None):
         with self.connect() as db:
-            query = "SELECT * FROM watches WHERE stale=0 AND expires<=?"
-            values = (self.now(),)
-            if identity is not None:
-                query += " AND id=?"
-                values += (identity,)
-            if db.execute(query + " LIMIT 1", values).fetchone() is None:
-                return
-            db.execute("BEGIN IMMEDIATE")
-            for row in db.execute(query, values).fetchall():
-                receipt = read_record(self.store, json.loads(row["receipt_ref"]), "receipt")
-                if not receipt["result"].get("stale") and self.now() >= receipt["expires_at"]:
-                    receipt = deepcopy(receipt)
-                    receipt["evaluated_at"] = self.now()
-                    receipt["result"] = {
-                        "status": "unknown",
-                        "checks": [],
-                        "gaps": [{"limitation": "Evidence expired; obtain a new observation"}],
-                        "stale": True,
-                    }
-                    self._commit(db, row, receipt, expiry=True)
+            self._expire(db, identity)
+
+    def _expire(self, db, identity):
+        query = "SELECT * FROM watches WHERE stale=0 AND expires<=?"
+        values = (self.now(),)
+        if identity is not None:
+            query += " AND id=?"
+            values += (identity,)
+        if db.execute(query + " LIMIT 1", values).fetchone() is None:
+            return
+        db.execute("BEGIN IMMEDIATE")
+        for row in db.execute(query, values).fetchall():
+            receipt = read_record(self.store, json.loads(row["receipt_ref"]), "receipt")
+            if not receipt["result"].get("stale") and self.now() >= receipt["expires_at"]:
+                receipt = deepcopy(receipt)
+                receipt["evaluated_at"] = self.now()
+                receipt["result"] = {
+                    "status": "unknown",
+                    "checks": [],
+                    "gaps": [{"limitation": "Evidence expired; obtain a new observation"}],
+                    "stale": True,
+                }
+                self._commit(db, row, receipt, expiry=True)
 
     def directory(self, after="", limit=30):
         """Stable ID keyset pagination; newly inserted lower IDs appear on refresh."""

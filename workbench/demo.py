@@ -2,9 +2,11 @@
 """Explicit simulated provider snapshots for the already-seen regression tasks."""
 
 import json
+from pathlib import Path
 
-from expansion_lab.storage import PROJECT, Store
 from ternela.connectors import recipe_plan, release_plan
+from ternela.paths import DATA, resource
+from ternela.storage import Store
 
 from .engine import phase_plan
 
@@ -46,7 +48,7 @@ CASES = {
 
 def catalog():
     store = Store()
-    result = json.loads((PROJECT / "examples/catalog.json").read_text())
+    result = json.loads(resource("examples/catalog.json").read_text())
     for provider, package, version in (("pypi", "httpx", "0.28.1"), ("npm", "lodash", "4.17.21")):
         task, plan = release_plan(provider, package, version)
         result.append(
@@ -74,14 +76,16 @@ def catalog():
     )
     # Completed user compilations remain discoverable after service/page restarts.
     for path in sorted(
-        (PROJECT / "data/runs").glob("task-*/manifest.json"),
+        (DATA / "runs").glob("task-*/manifest.json"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )[:20]:
         manifest = json.loads(path.read_text())
         if manifest.get("status") != "completed" or manifest.get("admission_status") != "accepted":
             continue
-        task = json.loads((PROJECT / manifest["fixtures"] / "public.json").read_text())["tasks"][0]
+        task = json.loads(
+            (DATA / Path(manifest["fixtures"]).relative_to("data") / "public.json").read_text()
+        )["tasks"][0]
         plan = store.get(manifest["plans"])["plans"][0]
         phases = {c["phase"] for c in plan["checks"]}
         result.append(

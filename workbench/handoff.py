@@ -13,6 +13,7 @@ import time
 import uuid
 from pathlib import Path
 
+from ternela.paths import DATA
 from ternela.storage import PROJECT, write_json
 
 LIMIT = 45
@@ -20,7 +21,7 @@ LIMIT = 45
 
 class HandoffDemo:
     def __init__(self, root=None):
-        self.root = Path(root or PROJECT / "data/demos/ui").resolve()
+        self.root = Path(root or DATA / "demos/ui").resolve()
         self.lock = threading.Lock()
 
     def current(self):

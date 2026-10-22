@@ -53,7 +53,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 
 
 def snapshot(root):
-    paths = {root / name for name in (*FILES, "AGENTS.md")}
+    paths = {root / name for name in (*FILES, "AGENTS.md", "package_build.py", "MANIFEST.in")}
     for directory in ROOTS:
         paths.update(
             p
@@ -123,7 +123,15 @@ def boundary_issues(root):
                 f"{path.relative_to(root)} uses dynamic imports; provider dependencies must be explicit"
             )
     # Follow actual core imports, so a new transitive helper cannot escape the rule.
-    pending = ["ternela", "ternela.client", "ternela.watches", "ternela.monitor"]
+    pending = [
+        "ternela",
+        "ternela.client",
+        "ternela.watches",
+        "ternela.monitor",
+        "ternela.compiler.jobs",
+        "ternela.compiler.run",
+        "ternela.compiler.guides",
+    ]
     seen = set()
     while pending:
         module = pending.pop()

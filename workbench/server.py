@@ -33,6 +33,7 @@ from ternela.connectors import (
 from ternela.contracts import Acquisition
 from ternela.migrations import SCHEMA_VERSION
 from ternela.monitor import Monitors
+from ternela.paths import resource, source
 from ternela.storage import PROJECT, Store, sha, strict_json, write_json
 from ternela.watches import Watches
 
@@ -43,7 +44,7 @@ from .handoff import HandoffDemo
 class Service:
     def __init__(self):
         self.store = Store()
-        self.engine = Watches(PROJECT / "data/workbench/watches.sqlite3", self.store)
+        self.engine = Watches(self.store.root / "workbench/watches.sqlite3", self.store)
         self.monitors = Monitors(self.engine)
         self.token = secrets.token_urlsafe(32)
         self.jobs = {}
@@ -71,11 +72,11 @@ class Service:
             or any(char not in "0123456789abcdef" for char in identity[5:])
         ):
             raise KeyError("Job not found")
-        task_path = PROJECT / "data/tasks" / identity / "public.json"
+        task_path = self.store.root / "tasks" / identity / "public.json"
         if not task_path.exists():
             raise KeyError("Job not found")
         task = json.loads(task_path.read_text())["tasks"][0]
-        manifest_path = PROJECT / "data/runs" / identity / "manifest.json"
+        manifest_path = self.store.root / "runs" / identity / "manifest.json"
         if manifest_path.exists():
             manifest = json.loads(manifest_path.read_text())
             if (
@@ -108,7 +109,7 @@ class Service:
         identity = "task-" + uuid.uuid4().hex
         task = dict(task, id=identity)
         self.jobs[identity] = {"id": identity, "status": "queued", "task": task}
-        directory = PROJECT / "data/tasks" / identity
+        directory = self.store.root / "tasks" / identity
         write_json(directory / "public.json", {"tasks": [task]})
         write_json(directory / "private.json", {"probes": {}})
         write_json(
@@ -124,7 +125,7 @@ class Service:
             job["status"] = "compiling"
             try:
                 process = subprocess.run(
-                    [sys.executable, "-m", "workbench.compiler", identity],
+                    [sys.executable, "-m", "ternela.compiler", identity],
                     cwd=PROJECT,
                     capture_output=True,
                     text=True,
@@ -136,7 +137,7 @@ class Service:
                         "Compilation did not finish. Inspect the saved run before retrying."
                     )
                 manifest = json.loads(
-                    (PROJECT / "data/runs" / identity / "manifest.json").read_text()
+                    (self.store.root / "runs" / identity / "manifest.json").read_text()
                 )
                 plan = self.store.get(manifest["plans"])["plans"][0]
                 from ternela.validation import admit
@@ -212,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
                             "task_compiler_available": shutil.which("codex") is not None,
                         },
                         "sources_present": all(
-                            (PROJECT / "data/sources" / (provider + ".json.gz")).is_file()
+                            source("sources/" + provider + ".json.gz").is_file()
                             for provider in ("github", "stripe", "slack")
                         ),
                     }
@@ -249,11 +250,13 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
                 return
             if path == "/api/bootstrap":
-                recorded = json.loads((PROJECT / "docs/evaluation.json").read_text())
+                if parse_qs(urlsplit(self.path).query).get("session") == ["1"]:
+                    return self.respond({"token": self.server.service.token})
+                recorded = json.loads(resource("docs/evaluation.json").read_text())
                 evaluation = {
                     key: recorded[key] for key in ("run_id", "corrected", "structural_issues")
                 }
-                supplements = PROJECT / "data/sources/supplements.json"
+                supplements = source("sources/supplements.json")
                 return self.respond(
                     {
                         "brand": BRAND,
@@ -495,7 +498,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond({"error": "Local service error; inspect terminal output"}, 500)
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument(
@@ -503,7 +506,7 @@ def main():
         action="store_true",
         help="Bind the container interface; publish only to host loopback",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.container and os.environ.get("TERNELA_CONTAINER") != "1":
         parser.error("--container is reserved for the supplied local container image")
     server = ThreadingHTTPServer(("0.0.0.0" if args.container else "127.0.0.1", args.port), Handler)

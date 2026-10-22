@@ -14,6 +14,7 @@ import time
 import uuid
 from pathlib import Path
 
+from ternela.paths import DATA
 from ternela.storage import PROJECT, write_json
 
 from . import handoff_support as support
@@ -272,7 +273,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.command != "run" and args.dir is None:
         parser.error("This command needs --dir pointing to an existing demo")
-    root = (args.dir or PROJECT / "data/demos" / ("agent-" + uuid.uuid4().hex[:12])).absolute()
+    root = (args.dir or DATA / "demos" / ("agent-" + uuid.uuid4().hex[:12])).absolute()
     if root.is_symlink():
         parser.error("Demo folder must not be a symbolic link")
     root = root.resolve()

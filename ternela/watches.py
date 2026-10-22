@@ -181,7 +181,6 @@ class Watches:
         return self.repository.expire(identity)
 
     def get(self, identity):
-        self.expire(identity)
         row, task, plan, receipt = self.repository.load(identity)
         selected = phase_plan(plan, row["phase"])
         watch = {

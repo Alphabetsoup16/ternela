@@ -260,6 +260,25 @@ def download_asset(asset, destination):
     Path(destination).write_bytes(raw)
 
 
+def seed_files(root):
+    """The same verified public evidence allowlist feeds wheels and app bundles."""
+    pins = json.loads((root / "data/sources/manifest.json").read_text())
+    for pin in pins:
+        path = root / "data/sources" / (pin["provider"] + ".json.gz")
+        if sha(gzip.decompress(path.read_bytes())) != pin["sha256"]:
+            raise ValueError("Unverified pinned source: " + pin["provider"])
+    seeds = ["sources/manifest.json", "sources/guides.json.gz", "sources/supplements.json"]
+    seeds += ["sources/" + pin["provider"] + ".json.gz" for pin in pins]
+    for record in json.loads((root / "data/sources/supplements.json").read_text()):
+        for field in ("raw_document", "example", "schema"):
+            digest = record[field]["sha256"]
+            name = "blobs/" + digest[:2] + "/" + digest + ".gz"
+            if sha(gzip.decompress((root / "data" / name).read_bytes())) != digest:
+                raise ValueError("Unverified supplemental source")
+            seeds.append(name)
+    return {name: (root / "data" / name).read_bytes() for name in seeds}
+
+
 def build_bundle(root, output):
     root, output = Path(root), Path(output)
     config = tomllib.loads((root / "pyproject.toml").read_text())
@@ -289,23 +308,7 @@ def build_bundle(root, output):
                 files[path.relative_to(root).as_posix()] = path.read_bytes()
     for name in FILES:
         files[name] = (root / name).read_bytes()
-    # Only pinned source documents and the three attributed supplemental blobs.
-    pins = json.loads((root / "data/sources/manifest.json").read_text())
-    for pin in pins:
-        path = root / "data/sources" / (pin["provider"] + ".json.gz")
-        if sha(gzip.decompress(path.read_bytes())) != pin["sha256"]:
-            raise ValueError("Unverified pinned source: " + pin["provider"])
-    seeds = ["sources/manifest.json", "sources/guides.json.gz", "sources/supplements.json"]
-    seeds += ["sources/" + pin["provider"] + ".json.gz" for pin in pins]
-    for record in json.loads((root / "data/sources/supplements.json").read_text()):
-        for field in ("raw_document", "example", "schema"):
-            digest = record[field]["sha256"]
-            name = "blobs/" + digest[:2] + "/" + digest + ".gz"
-            if sha(gzip.decompress((root / "data" / name).read_bytes())) != digest:
-                raise ValueError("Unverified supplemental source")
-            seeds.append(name)
-    for name in seeds:
-        files["seed/" + name] = (root / "data" / name).read_bytes()
+    files.update({"seed/" + name: raw for name, raw in seed_files(root).items()})
     manifest = {
         "format": FORMAT,
         "runtime": RUNTIME,

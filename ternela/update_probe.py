@@ -10,7 +10,8 @@ from ternela.acquisition import acquire as collect
 from ternela.branding import BRAND
 from ternela.contracts import Acquisition
 from ternela.distribution import version
-from ternela.storage import PROJECT, Store, write_json
+from ternela.paths import resource
+from ternela.storage import Store, write_json
 from ternela.watches import Watches
 
 
@@ -18,7 +19,7 @@ def probe(current):
     version(current)
     template = next(
         t
-        for t in json.loads((PROJECT / "examples/catalog.json").read_text())
+        for t in json.loads(resource("examples/catalog.json").read_text())
         if t["task"]["id"] == "live-github-demo-1"
     )
     task, plan = deepcopy(template["task"]), deepcopy(template["plan"])
@@ -55,8 +56,9 @@ def probe(current):
             "limitation": "A different tag is not necessarily a newer compatible version or a trusted executable.",
         }
     )
-    engine = Watches(PROJECT / "data/workbench/watches.sqlite3", Store())
-    record_path = PROJECT / "data/local-update-watch.json"
+    store = Store()
+    engine = Watches(store.root / "workbench/watches.sqlite3", store)
+    record_path = store.root / "local-update-watch.json"
     record = json.loads(record_path.read_text()) if record_path.exists() else {}
     if record.get("version") != current:
         watch = engine.create(task, plan, "after", ttl=300)

@@ -9,7 +9,7 @@ import os
 import uuid
 from pathlib import Path
 
-PROJECT = Path(__file__).resolve().parent.parent
+from .paths import DATA, PROJECT  # noqa: F401 — compatibility import
 
 
 def sha(data):
@@ -60,7 +60,7 @@ def write_json(path, value):
 
 class Store:
     def __init__(self, root=None):
-        self.root = Path(root or PROJECT / "data")
+        self.root = Path(root) if root is not None else DATA
 
     def put(self, value, media_type="application/json"):
         data = (

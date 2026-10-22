@@ -111,6 +111,13 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(result["receipt"]["result"]["status"], "unknown")
         self.assertEqual(client.health()["formats"]["database"], 3)
 
+    def test_sdk_session_does_not_load_ui_templates(self):
+        with patch("workbench.server.demo.catalog", side_effect=AssertionError("UI-only work")):
+            client = ObservationClient(self.base)
+            self.assertEqual(client.token, self.server.service.token)
+            session = client._request("/api/bootstrap?session=1")
+            self.assertEqual(session, {"token": self.server.service.token})
+
     def test_mutation_requires_session_token(self):
         request = Request(
             self.base + "/api/watches",

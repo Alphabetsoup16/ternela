@@ -1,0 +1,14 @@
+include package_build.py
+include AGENTS.md CONTRIBUTING.md NOTICE THIRD_PARTY_NOTICES.md
+include examples/catalog.json docs/evaluation.json
+recursive-include docs/licenses *.txt
+recursive-include workbench/static *.html *.css *.js
+recursive-include ternela/compiler/prompts *.txt *.json
+prune data
+prune dist
+prune build
+prune tests
+prune workbench/tests
+prune safety_lab/tests
+prune expansion_lab/fresh
+global-exclude __pycache__ *.py[cod] .DS_Store

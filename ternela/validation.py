@@ -11,6 +11,7 @@ from ternela.storage import PROJECT, canonical, sha, strict_json
 
 from .connectors import SOURCE_FILES, source_index
 from .errors import AdmissionError
+from .paths import source as source_path
 
 
 def admit(plan, task, indexes=None):
@@ -74,7 +75,7 @@ def admit(plan, task, indexes=None):
                         issues.append("Check references missing context")
     if issues:
         raise AdmissionError("Plan admission failed: " + "; ".join(dict.fromkeys(issues)))
-    pins = json.loads((PROJECT / "data/sources/manifest.json").read_text())
+    pins = json.loads(source_path("sources/manifest.json").read_text())
     validation_files = [
         *SOURCE_FILES,
         *[
@@ -94,6 +95,7 @@ def admit(plan, task, indexes=None):
                 "plan_schema",
                 "plan_audit",
                 "storage",
+                "paths",
                 "specification",
                 "pinned_sources",
                 "sources",
