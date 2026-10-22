@@ -37,6 +37,7 @@ from ternela.storage import PROJECT, Store, sha, strict_json, write_json
 from ternela.watches import Watches
 
 from . import demo
+from .handoff import HandoffDemo
 
 
 class Service:
@@ -46,6 +47,7 @@ class Service:
         self.monitors = Monitors(self.engine)
         self.token = secrets.token_urlsafe(32)
         self.jobs = {}
+        self.handoff = HandoffDemo()
         self.pool = ThreadPoolExecutor(max_workers=1)
 
     def watch(self, identity):
@@ -191,6 +193,8 @@ class Handler(BaseHTTPRequestHandler):
             if not self.valid_host():
                 return self.respond({"error": "Invalid host"}, 403)
             path = urlsplit(self.path).path
+            if path == "/api/agent-demo":
+                return self.respond(self.server.service.handoff.current())
             if path == "/api/health":
                 return self.respond(
                     {
@@ -360,6 +364,10 @@ class Handler(BaseHTTPRequestHandler):
             path = urlsplit(self.path).path
             if not isinstance(body, dict):
                 raise ValueError("Expected a JSON object")
+            if path == "/api/agent-demo":
+                if body:
+                    raise ValueError("The demo accepts no options; it runs locally without a model")
+                return self.respond(service.handoff.start(), 202)
             if path == "/api/compile":
                 return self.respond(service.compile(body), 202)
             if path == "/api/watches":

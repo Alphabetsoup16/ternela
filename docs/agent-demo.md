@@ -26,6 +26,30 @@ sequenceDiagram
     Runner->>Ternela: Acknowledge after answer verification
 ```
 
+## Click once in the workbench
+
+From a prepared current source checkout, run `python3 -m ternela`, open
+[the workbench](http://127.0.0.1:8765/), and click **Run agent demo** at the top.
+The same example runs on the local server. The browser displays actual saved events:
+watch created, agent stopped, export received, continuation launched, answer verified.
+The export takes five seconds so the stopped state is easy to see. A reload rejoins
+saved progress; another click while running reuses the active run.
+
+This UI mode always uses the deterministic reference agent. It cannot launch Codex,
+accept arbitrary commands or read a user-selected folder. The job, CSV, watch,
+queue and continuation are real. **Inspect the actual output** shows the produced
+CSV and verified answer. The runner polls the saved queue; no model runs during
+that wait. Events can complete between browser refreshes, and their actual timestamps
+remain visible in the timeline.
+
+Runs are isolated under `data/demos/ui/`, with compressed logs. Starting another run
+retains up to five previous finished runs plus the current run; older owned finished
+runs are removed. Unrelated folders and active runs are retained. A running server
+bounds each attempt to 45 seconds. A stalled/interrupted attempt fails visibly and
+can be retried. The latest saved completion remains inspectable after restart.
+POST uses the existing local token and origin checks. This is a local alpha demo,
+not an endpoint for remotely scheduling arbitrary agents.
+
 ## See the handoff without an account
 
 From the current source checkout, with Docker Desktop or Colima running on macOS:

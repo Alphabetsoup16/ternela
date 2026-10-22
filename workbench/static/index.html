@@ -77,6 +77,92 @@
       <main id="workspace" tabindex="-1">
         <div id="error" class="error" role="alert" hidden></div>
         <section
+          id="agent-demo"
+          class="agent-demo"
+          aria-labelledby="agent-demo-title"
+        >
+          <div class="section-heading">
+            <div>
+              <h2 id="agent-demo-title">See an agent stop and resume</h2>
+              <p class="muted">
+                “When the sales export is ready, summarize it.”
+              </p>
+            </div>
+            <button id="run-agent-demo" class="primary" type="button" disabled>
+              Run agent demo
+            </button>
+          </div>
+          <p class="demo-disclosure">
+            Real local job and file. Reference agent, no model calls or account
+            needed.
+          </p>
+          <div id="agent-demo-progress" hidden>
+            <p
+              id="agent-demo-status"
+              class="demo-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <ol
+              id="agent-demo-steps"
+              class="demo-steps"
+              aria-label="Agent handoff progress"
+            >
+              <li>
+                <span class="demo-step-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>Watch created</strong>
+                  <p>Agent saves what it is waiting for.</p>
+                </div>
+                <span class="demo-step-time"></span>
+              </li>
+              <li>
+                <span class="demo-step-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>Agent stopped</strong>
+                  <p>Export runs separately. No agent is waiting in a loop.</p>
+                </div>
+                <span class="demo-step-time"></span>
+              </li>
+              <li>
+                <span class="demo-step-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>Event received</strong>
+                  <p>Ternela verifies the completed export and its CSV.</p>
+                </div>
+                <span class="demo-step-time"></span>
+              </li>
+              <li>
+                <span class="demo-step-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>Agent resumed</strong>
+                  <p>Saved completion launches the continuation.</p>
+                </div>
+                <span class="demo-step-time"></span>
+              </li>
+              <li>
+                <span class="demo-step-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>Answer verified</strong>
+                  <p>Summary is checked before the event is acknowledged.</p>
+                </div>
+                <span class="demo-step-time"></span>
+              </li>
+            </ol>
+            <div id="agent-demo-answer" class="demo-answer" hidden>
+              <strong id="agent-demo-total"></strong>
+              <p>
+                The agent read the actual CSV. Ternela saved the handoff while
+                the agent was stopped.
+              </p>
+              <details>
+                <summary>Inspect the actual output</summary>
+                <pre id="agent-demo-evidence"></pre>
+              </details>
+            </div>
+          </div>
+        </section>
+        <section
           id="create-watch"
           class="create-section"
           aria-labelledby="create-title"

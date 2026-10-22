@@ -12,6 +12,15 @@ visible; API operations, original task text, plan JSON, receipts and reset live 
 acknowledgment action. Compilation is an advanced option and is disabled when the
 host reports that its CLI is unavailable.
 
+## One-click agent handoff
+
+The **Run agent demo** section above the watch opens a real local export handoff.
+Its five-stage timeline follows saved runner events, including an actual stopped
+agent interval, then exposes the CSV and verified summary. It always uses the
+clearly labeled no-model reference agent. Reload joins the saved run; repeated
+clicks while active reuse it. See [the demo guide](agent-demo.md) for recovery,
+retention, the protected local API, and the optional CLI model-backed version.
+
 ## Keep the interface small
 
 There is no frontend runtime dependency, CDN, build pipeline or component framework.

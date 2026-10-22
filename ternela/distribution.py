@@ -46,7 +46,20 @@ FILES = (
     ".dockerignore",
     ".gitignore",
 )
-SUFFIXES = {".py", ".json", ".gz", ".txt", ".md", ".html", ".css", ".js", ".svg", ".sh", ".ps1"}
+SUFFIXES = {
+    ".py",
+    ".json",
+    ".gz",
+    ".txt",
+    ".md",
+    ".html",
+    ".css",
+    ".js",
+    ".svg",
+    ".jpg",
+    ".sh",
+    ".ps1",
+}
 
 
 def sha(raw):

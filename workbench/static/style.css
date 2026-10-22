@@ -118,7 +118,7 @@ button:disabled {
   transform: none;
 }
 button.primary:disabled {
-  background: #687e97;
+  background: #596f88;
   border-color: #687e97;
   color: white;
 }
@@ -873,4 +873,91 @@ footer details details {
 #usage-summary {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+
+/* One local demo, with actual event timestamps rather than a timed animation. */
+.agent-demo {
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.agent-demo .section-heading {
+  align-items: center;
+}
+.agent-demo h2 {
+  margin-bottom: 4px;
+}
+.demo-disclosure {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin-top: var(--space-1);
+}
+.demo-status {
+  font-weight: 600;
+  margin-top: var(--space-3);
+}
+.demo-steps {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+}
+.demo-steps li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 0;
+  color: var(--muted);
+}
+.demo-steps p {
+  font-size: 0.93rem;
+}
+.demo-step-mark {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  margin-top: 5px;
+}
+.demo-steps [data-state="done"] {
+  color: var(--ink);
+}
+.demo-steps [data-state="done"] .demo-step-mark {
+  background: var(--good);
+  border-color: var(--good);
+}
+.demo-steps [aria-current="step"] .demo-step-mark {
+  border-color: var(--accent);
+  background: var(--selected);
+}
+.demo-step-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.demo-answer {
+  background: var(--good-bg);
+  color: var(--good);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+}
+.demo-answer > strong {
+  display: block;
+  font-size: 1.15rem;
+}
+.demo-answer summary {
+  color: var(--good);
+}
+.demo-answer pre {
+  color: var(--ink);
+  background: var(--paper);
+}
+@media (max-width: 650px) {
+  .agent-demo .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .demo-steps li {
+    gap: 8px;
+  }
 }

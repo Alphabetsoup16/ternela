@@ -16,7 +16,7 @@ python3 -m ternela.check
 | Scenario expectations met | 41 / 41 |
 | Structural audit issues | 0 |
 | False ready/complete outcomes | 0 in this set |
-| Unit/API tests in the current local suite | 377 |
+| Unit/API tests in the current local suite | 385 |
 
 The machine-readable recorded result is in [evaluation.json](evaluation.json).
 The synthetic task/probe fixtures are under `expansion_lab/fresh/`; the bundled

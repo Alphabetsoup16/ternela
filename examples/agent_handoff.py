@@ -95,6 +95,11 @@ def consume(root, timeout):
             say(root, "pending", "Condition not complete; agent stays stopped.")
             continue
         support.fresh_completion(root, message)
+        say(
+            root,
+            "observed",
+            "Export finished. CSV identity, digest and completion evidence verified.",
+        )
         # Recovery after the local answer was committed but acknowledgement was interrupted.
         try:
             answer = support.verify_answer(root, message)

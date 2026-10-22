@@ -929,10 +929,92 @@ $("usage").addEventListener("toggle", () => {
   if ($("usage").open) loadUsage().catch(fail);
 });
 
+let demoTimer;
+function renderAgentDemo(run) {
+  clearTimeout(demoTimer);
+  const active = run.status === "running";
+  $("run-agent-demo").disabled = active;
+  setText(
+    "run-agent-demo",
+    active
+      ? "Demo running…"
+      : run.status === "idle"
+        ? "Run agent demo"
+        : "Run again",
+  );
+  $("agent-demo-progress").hidden = run.status === "idle";
+  if (run.status === "idle") return;
+  const events = new Map(run.events.map((event) => [event.event, event]));
+  const stages = [
+    events.get("watch"),
+    events.get("watch"),
+    events.get("observed"),
+    events.get("resume") || events.get("recover"),
+    events.get("done"),
+  ];
+  const start = events.get("agent")?.at;
+  const last = stages.findLastIndex(Boolean);
+  for (const [index, step] of [...$("agent-demo-steps").children].entries()) {
+    step.dataset.state = stages[index] ? "done" : "waiting";
+    if (active && index === Math.max(0, last))
+      step.setAttribute("aria-current", "step");
+    else step.removeAttribute("aria-current");
+    step.querySelector(".demo-step-time").textContent =
+      stages[index] && start !== undefined
+        ? `${Math.max(0, stages[index].at - start).toFixed(1)}s`
+        : "Not yet";
+  }
+  const status =
+    run.status === "failed"
+      ? run.error || "Demo stopped. Run it again to retry."
+      : run.status === "completed"
+        ? "Agent resumed. Summary verified and event acknowledged."
+        : events.has("resume")
+          ? "Agent resumed. Reading the CSV and checking its answer…"
+          : events.has("watch")
+            ? "Agent stopped. The separate export is running…"
+            : "Starting the reference agent and creating its watch…";
+  setText("agent-demo-status", status);
+  $("agent-demo-answer").hidden = run.status !== "completed";
+  if (run.status === "completed") {
+    setText(
+      "agent-demo-total",
+      `${run.answer.orders} orders · $${(run.answer.total_cents / 100).toFixed(2)} USD`,
+    );
+    setText(
+      "agent-demo-evidence",
+      `${run.csv}\nVerified answer\n${JSON.stringify(run.answer, null, 2)}`,
+    );
+  }
+  if (active) demoTimer = setTimeout(loadAgentDemo, 500);
+}
+async function loadAgentDemo() {
+  try {
+    renderAgentDemo(await api("/api/agent-demo"));
+  } catch {
+    renderAgentDemo({
+      status: "failed",
+      events: [],
+      error:
+        "Could not reach the demo. Run again to reconnect; an active run will be reused.",
+    });
+  }
+}
+$("run-agent-demo").addEventListener("click", async () => {
+  clearTimeout(demoTimer);
+  $("run-agent-demo").disabled = true;
+  try {
+    renderAgentDemo(await api("/api/agent-demo", {}));
+  } catch (error) {
+    renderAgentDemo({ status: "failed", events: [], error: error.message });
+  }
+});
+
 async function start() {
   try {
     const boot = await api("/api/bootstrap");
     token = boot.token;
+    loadAgentDemo();
     templates = boot.templates;
     for (const connector of boot.connectors) {
       providerNames[connector.provider] = connector.label;

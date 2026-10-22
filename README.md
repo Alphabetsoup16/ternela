@@ -102,7 +102,15 @@ For an unattended public wait, select the GitHub, GitHub Status, PyPI or npm exa
 A separate process writes the actual CSV; a durable completion launches the agent's
 continuation, which reads the file and produces a verified **$68.00** summary.
 
-From the current source checkout on macOS:
+**In the UI:** from the current source checkout, run `python3 -m ternela`, open
+[the workbench](http://127.0.0.1:8765/), and click **Run agent demo** at the top.
+Watch the agent stop, the export complete, and the continuation return. The timeline
+uses actual event timestamps; **Inspect the actual output** shows the CSV and verified
+answer. No account, model setup or terminal commands are needed after opening the UI.
+
+![One-click agent demo: the watch is saved, the agent stops, an export event arrives, and the resumed agent returns a verified summary.](docs/images/agent-demo.jpg)
+
+Or run the account-free container demo from the checkout on macOS:
 
 ```sh
 sh scripts/agent-demo.sh
@@ -174,7 +182,7 @@ or make a later business action atomic with the observation.
 
 ## Evidence, not a headline benchmark
 
-The current implementation passes **377 unit/API tests** and **41/41 known regression
+The current implementation passes **385 unit/API tests** and **41/41 known regression
 scenarios**, with zero structural audit issues or false ready/complete outcomes in
 that regression set. Those scenarios use simulated responses and previously seen
 providers. They are not a blinded generalization or production reliability claim.
