@@ -23,7 +23,7 @@ or completion. Missing, inaccessible or expired evidence stays unknown.
 
 ## Try it
 
-**Supported host: macOS.** Windows and Linux hosts are unsupported for this first
+**Supported host: macOS.** Windows and Linux hosts are unsupported for this
 alpha release. The Linux container is the application runtime.
 
 **Local container install (recommended):** start Docker Desktop or Colima on
@@ -102,8 +102,8 @@ For an unattended public wait, select the GitHub, GitHub Status, PyPI or npm exa
 A separate process writes the actual CSV; a durable completion launches the agent's
 continuation, which reads the file and produces a verified **$68.00** summary.
 
-**In the UI:** from the current source checkout, run `python3 -m ternela`, open
-[the workbench](http://127.0.0.1:8765/), and click **Run agent demo** at the top.
+**In the UI:** install or update to **v0.1.2**, open the printed workbench URL,
+and click **Run agent demo** at the top. From source, run `python3 -m ternela`.
 Watch the agent stop, the export complete, and the continuation return. The timeline
 uses actual event timestamps; **Inspect the actual output** shows the CSV and verified
 answer. No account, model setup or terminal commands are needed after opening the UI.
@@ -125,7 +125,7 @@ python3 -m examples.agent_handoff --agent codex
 ```
 
 Requires Python 3.11+ and a signed-in Codex CLI. The demo is isolated from your saved
-watches. It is source-only after v0.1.1; the published v0.1.1 archive remains unchanged.
+watches. Both demos are included in the v0.1.2 application archive.
 [Run it, inspect the evidence, and try restart recovery →](docs/agent-demo.md)
 
 ## What a watch does
@@ -204,7 +204,7 @@ result; uncertain changes run the full suite. [How the loop stays small →](doc
 [Product plan](docs/roadmap.md) · [Add a connector](docs/adding-connectors.md) ·
 [Optional Jev review](docs/semantic-review.md) ·
 [Contributing](CONTRIBUTING.md) · [Rebranding](docs/rebranding.md) ·
-[Release notes](docs/releases/v0.1.1.md) ·
+[Release notes](docs/releases/v0.1.2.md) ·
 [Release audit](docs/audits/2026-10-19.md) ·
 [Monitoring audit](docs/audits/2026-10-19-monitoring.md) ·
 [Public connector audit](docs/audits/2026-10-19-public-connectors.md) ·

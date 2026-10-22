@@ -28,8 +28,9 @@ sequenceDiagram
 
 ## Click once in the workbench
 
-From a prepared current source checkout, run `python3 -m ternela`, open
-[the workbench](http://127.0.0.1:8765/), and click **Run agent demo** at the top.
+Install or update to v0.1.2, open the printed workbench URL, and click
+**Run agent demo** at the top. From a prepared source checkout, run
+`python3 -m ternela` and open [the workbench](http://127.0.0.1:8765/).
 The same example runs on the local server. The browser displays actual saved events:
 watch created, agent stopped, export received, continuation launched, answer verified.
 The export takes five seconds so the stopped state is easy to see. A reload rejoins
@@ -87,8 +88,8 @@ RESUME    Completion received. Launching the saved agent continuation.
 DONE      3 orders · $68.00 USD. Answer verified; delivery acknowledged.
 ```
 
-This demo is available in the source checkout after v0.1.1; it is not included in
-that already-published immutable archive. Use the current checkout for these commands.
+The UI and CLI demos are included in the v0.1.2 application archive. Existing
+v0.1.1 installations receive them through their ordinary update command.
 
 ## Use a real model-backed agent
 
