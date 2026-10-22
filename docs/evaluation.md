@@ -16,7 +16,7 @@ python3 -m ternela.check
 | Scenario expectations met | 41 / 41 |
 | Structural audit issues | 0 |
 | False ready/complete outcomes | 0 in this set |
-| Unit/API tests in the current local suite | 355 |
+| Unit/API tests in the current local suite | 377 |
 
 The machine-readable recorded result is in [evaluation.json](evaluation.json).
 The synthetic task/probe fixtures are under `expansion_lab/fresh/`; the bundled
@@ -85,3 +85,8 @@ The [continuous development pass](audits/2026-10-20-development-loop.md) adds 27
 tests and exercises incremental selection and offline receipt comparison. Historical
 receipt expectations detect behavioral change; they are not independent truth labels.
 The recorded timings are local observations, not service performance guarantees.
+
+The [local agent handoff pass](audits/2026-10-21-agent-handoff.md) adds actual
+process/artifact and restart recovery tests, a no-account container demo, and one
+successful two-turn Codex session. It validates this controlled local handoff;
+it does not establish general autonomous-agent reliability.

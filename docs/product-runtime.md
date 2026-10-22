@@ -20,6 +20,10 @@ check less often; that needs a separately measured detection-latency policy.
 
 ## Try a durable handoff
 
+For the one-command local export and a real Codex continuation, see the
+[agent handoff demo](agent-demo.md). It exercises a controlled local producer; the
+public API example below uses the running service.
+
 With the service running:
 
 ```sh

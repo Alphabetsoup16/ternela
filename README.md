@@ -96,6 +96,30 @@ For an unattended public wait, select the GitHub, GitHub Status, PyPI or npm exa
 24 hours; its schedule survives restart. You can pause it from the same view.
 [Monitoring contract and SDK example →](docs/monitoring.md)
 
+## See an agent stop and resume
+
+“When the sales export is ready, summarize it.” The agent creates a watch and exits.
+A separate process writes the actual CSV; a durable completion launches the agent's
+continuation, which reads the file and produces a verified **$68.00** summary.
+
+From the current source checkout on macOS:
+
+```sh
+sh scripts/agent-demo.sh
+```
+
+This account-free Docker run uses a clearly labelled **reference agent with no model
+call**. The job, file, evidence, queue and process handoff are real. For a model-backed
+run that resumes the exact saved Codex conversation:
+
+```sh
+python3 -m examples.agent_handoff --agent codex
+```
+
+Requires Python 3.11+ and a signed-in Codex CLI. The demo is isolated from your saved
+watches. It is source-only after v0.1.1; the published v0.1.1 archive remains unchanged.
+[Run it, inspect the evidence, and try restart recovery →](docs/agent-demo.md)
+
 ## What a watch does
 
 ```mermaid
@@ -150,7 +174,7 @@ or make a later business action atomic with the observation.
 
 ## Evidence, not a headline benchmark
 
-The current implementation passes **355 unit/API tests** and **41/41 known regression
+The current implementation passes **377 unit/API tests** and **41/41 known regression
 scenarios**, with zero structural audit issues or false ready/complete outcomes in
 that regression set. Those scenarios use simulated responses and previously seen
 providers. They are not a blinded generalization or production reliability claim.
